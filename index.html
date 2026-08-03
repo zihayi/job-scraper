@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Scraper</title>
+  <style>
+    :root {
+      --bg: #fafbfc; --bg-soft: #f4f6f8; --panel: #ffffff; --panel-2: #f1f4f6;
+      --line: #e2e6ea; --line-soft: #edf0f2;
+      --text: #1c2530; --text-2: #5a6573; --muted: #93a0ad;
+      --brand: #0f766e; --brand-2: #0c5f58; --brand-soft: #e6f2f0; --brand-glow: rgba(15,118,110,.16);
+      --ok: #059669; --warn: #d97706; --danger: #dc2626; --star: #e8a317;
+      --radius: 14px; --shadow: 0 1px 3px rgba(28,37,48,.06), 0 1px 2px rgba(28,37,48,.04);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text); line-height: 1.55; min-height: 100vh; -webkit-font-smoothing: antialiased;
+    }
+    ::selection { background: var(--brand-glow); }
+
+    .topbar { position: sticky; top: 0; z-index: 30; backdrop-filter: blur(14px); background: rgba(250,251,252,.85); border-bottom: 1px solid var(--line-soft); }
+    .topbar-inner { max-width: 1240px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; gap: 14px; }
+    .topbar .spacer { flex: 1; }
+    .brand-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 64px; }
+
+    /* ---------- 朴素标题区 ---------- */
+    .hero { margin-bottom: 26px; }
+    .hero h2 { margin: 0 0 4px; font-size: 23px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+    .hero p { margin: 0 0 18px; color: var(--text-2); font-size: 14px; max-width: 720px; }
+    .hero p b { color: var(--text); font-weight: 600; }
+    .search { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+    .input-shell { flex: 1; min-width: 280px; position: relative; display: flex; align-items: center; }
+    .input-shell .ic { position: absolute; left: 14px; font-size: 15px; opacity: .55; }
+    input[type=text] { width: 100%; padding: 13px 14px 13px 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; font-size: 14px; color: var(--text); transition: border-color .15s, box-shadow .15s; }
+    input[type=text]::placeholder { color: var(--muted); }
+    input[type=text]:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .toggle { display: flex; align-items: center; gap: 8px; padding: 0 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; font-size: 13px; color: var(--text-2); cursor: pointer; user-select: none; white-space: nowrap; }
+    .toggle input { display: none; }
+    .switch { width: 38px; height: 22px; border-radius: 999px; background: var(--line); position: relative; transition: background .2s; flex: none; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+    .toggle input:checked + .switch { background: var(--brand); }
+    .toggle input:checked + .switch::after { transform: translateX(16px); }
+    button { font-family: inherit; cursor: pointer; border: none; transition: all .15s; }
+    .btn-primary { padding: 13px 24px; border-radius: 11px; font-size: 14px; font-weight: 600; color: #fff; background: var(--brand); }
+    .btn-primary:hover { background: var(--brand-2); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+    .scrape-msg { margin-top: 14px; font-size: 13px; min-height: 18px; display: flex; align-items: center; gap: 8px; }
+    .scrape-msg.err { color: var(--danger); }
+    .scrape-msg.ok { color: var(--ok); }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 26px; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; transition: border-color .15s; }
+    .stat:hover { border-color: #cfd6dc; }
+    .stat .num { font-size: 26px; font-weight: 700; line-height: 1; }
+    .stat .lbl { font-size: 12.5px; color: var(--text-2); margin-top: 6px; }
+    .stat .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin: 0 0 16px; flex-wrap: wrap; gap: 10px; }
+    .section-head h3 { margin: 0; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .count-pill { font-size: 12px; color: var(--text-2); background: var(--panel-2); border: 1px solid var(--line); padding: 2px 10px; border-radius: 999px; }
+    .head-actions { display: flex; gap: 8px; }
+    .btn-ghost { padding: 8px 14px; border-radius: 9px; font-size: 13px; color: var(--text-2); background: var(--panel); border: 1px solid var(--line); display: inline-flex; align-items: center; text-decoration: none; }
+    .btn-ghost:hover { color: var(--text); border-color: #cfd6dc; background: var(--panel-2); }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+    .chip { padding: 7px 15px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--panel); border: 1px solid var(--line); color: var(--text-2); cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 7px; }
+    .chip:hover { color: var(--text); border-color: #cfd6dc; }
+    .chip.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .chip .c-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .chip .c-num { opacity: .8; font-variant-numeric: tabular-nums; }
+
+    /* ---------- Table ---------- */
+    .table-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    thead th { text-align: left; padding: 14px 14px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--line); background: var(--bg-soft); white-space: nowrap; }
+    tbody td { padding: 13px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+    tbody tr.job-row { cursor: pointer; transition: background .12s; }
+    tbody tr.job-row:hover { background: var(--panel-2); }
+    tbody tr:last-child td { border-bottom: none; }
+    .col-star { width: 40px; text-align: center; }
+    .col-title { min-width: 180px; font-weight: 600; color: var(--text); }
+    .col-title .verb { margin-left: 6px; }
+    .title-sub { font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+    .star-btn { font-size: 17px; background: none; line-height: 1; color: #c7cdda; transition: transform .12s; }
+    .star-btn.on { color: var(--star); }
+    .star-btn:hover { transform: scale(1.25); }
+    .verbatim { font-weight: 600; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .verbatim.ok { background: rgba(52,211,153,.14); color: var(--ok); border: 1px solid rgba(52,211,153,.3); }
+    .verbatim.warn { background: rgba(251,191,36,.14); color: var(--warn); border: 1px solid rgba(251,191,36,.3); }
+    .cell-muted { color: var(--text-2); }
+    select { padding: 7px 10px; border-radius: 9px; font-size: 12.5px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; max-width: 110px; }
+    select:focus { outline: none; border-color: var(--brand); }
+    .status-pill { font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; display: inline-block; }
+    .rt-pill { font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
+    .rt-pill.campus { background: var(--brand-soft); color: var(--brand); border-color: rgba(15,118,110,.25); }
+    .rt-pill.social { background: #eef1f4; color: var(--text-2); border-color: var(--line); }
+    .note-input { width: 100%; min-width: 110px; padding: 7px 10px; border-radius: 9px; font-size: 12.5px; background: var(--bg); border: 1px solid var(--line); color: var(--text); }
+    .note-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-glow); }
+    .row-actions { display: flex; gap: 6px; white-space: nowrap; }
+    .icon-btn { padding: 6px 9px; border-radius: 8px; font-size: 13px; background: var(--panel-2); border: 1px solid var(--line); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; }
+    .icon-btn:hover { color: var(--text); border-color: var(--brand); }
+    .icon-btn.del:hover { color: var(--danger); border-color: rgba(248,113,113,.4); }
+    .expand-arrow { color: var(--muted); font-size: 11px; transition: transform .15s; display: inline-block; }
+    tr.expanded .expand-arrow { transform: rotate(90deg); }
+
+    /* detail row */
+    .detail-row td { padding: 0; background: var(--bg-soft); border-bottom: 1px solid var(--line-soft); }
+    .detail-inner { padding: 20px 22px; }
+    .detail-inner.hide { display: none; }
+    .desc-head { font-size: 12.5px; font-weight: 700; color: var(--text-2); margin: 0 0 6px; display: flex; align-items: center; gap: 8px; }
+    .desc { font-size: 13.5px; color: var(--text-2); white-space: pre-wrap; margin: 0 0 14px; }
+    .reqs { font-size: 13px; color: var(--text-2); margin: 0; padding-left: 18px; }
+    .reqs li { margin-bottom: 4px; }
+    .detail-foot { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .src-link { font-size: 12.5px; color: var(--brand); text-decoration: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; }
+    .src-link:hover { border-color: var(--brand); }
+
+    .empty { text-align: center; padding: 56px 24px; color: var(--muted); }
+    .empty .big { font-size: 40px; margin-bottom: 12px; opacity: .7; }
+    .empty .t { font-size: 15px; color: var(--text-2); margin-bottom: 4px; }
+    .empty .s { font-size: 13px; }
+
+    .spinner { width: 15px; height: 15px; border: 2px solid var(--brand); border-top-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; flex: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #toasts { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--brand); padding: 13px 18px; border-radius: 12px; font-size: 13.5px; color: var(--text); box-shadow: var(--shadow); min-width: 220px; animation: slidein .25s ease; display: flex; align-items: center; gap: 10px; }
+    .toast.ok { border-left-color: var(--ok); }
+    .toast.err { border-left-color: var(--danger); }
+    .toast.fade { animation: fadeout .3s ease forwards; }
+    @keyframes slidein { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeout { to { transform: translateX(40px); opacity: 0; } }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(23,33,66,.45); backdrop-filter: blur(4px); z-index: 90; display: none; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; max-width: 720px; width: 100%; max-height: 82vh; display: flex; flex-direction: column; box-shadow: var(--shadow); animation: slidein .2s ease; }
+    .modal-head { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
+    .modal-head h3 { margin: 0; font-size: 15px; }
+    .modal-close { font-size: 20px; color: var(--muted); background: none; line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 22px; overflow-y: auto; white-space: pre-wrap; font-size: 13.5px; color: var(--text-2); line-height: 1.7; }
+    .modal-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+
+    .topbar-btn { padding: 8px 14px; border-radius: 10px; font-size: 13px; color: var(--text-2); background: var(--panel-2); border: 1px solid var(--line); }
+    .topbar-btn:hover { color: var(--text); border-color: var(--brand); }
+    .topbar-btn.warn { border-color: rgba(251,191,36,.5); color: var(--warn); }
+
+    /* settings form */
+    .form-row { margin-bottom: 18px; }
+    .form-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+    .form-row .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+    .form-row input[type=password], .form-row input[type=text], .form-row select {
+      width: 100%; max-width: 100%; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line);
+      border-radius: 10px; font-size: 13.5px; color: var(--text);
+    }
+    .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .key-status { font-size: 12.5px; padding: 8px 12px; border-radius: 9px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .key-status.ok { background: rgba(52,211,153,.12); color: var(--ok); border: 1px solid rgba(52,211,153,.25); }
+    .key-status.no { background: rgba(251,191,36,.12); color: var(--warn); border: 1px solid rgba(251,191,36,.25); }
+    .modal-body.form { white-space: normal; }
+
+    .table-scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-name">Job Scraper</div>
+      <div class="spacer"></div>
+      <button class="topbar-btn" id="settingsBtn" onclick="openSettings()" title="设置 API Key 与模型">⚙️ 设置</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <h2>粘贴职位链接，一键抓取</h2>
+      <div class="search">
+        <div class="input-shell">
+          <span class="ic">🔗</span>
+          <input type="text" id="url" placeholder="https://apply.careers.dji.com/...#/job/..." />
+        </div>
+        <label class="toggle" title="SPA 页面需开启，让浏览器渲染后再抓取">
+          <input type="checkbox" id="dynamic" checked />
+          <span class="switch"></span>
+          动态渲染
+        </label>
+        <button id="scrapeBtn" class="btn-primary" onclick="scrape()">抓取职位</button>
+      </div>
+      <div id="scrapeMsg" class="scrape-msg"></div>
+    </div>
+
+    <div class="stats" id="stats"></div>
+
+    <div class="section-head">
+      <h3>📋 职位名单 <span class="count-pill" id="savedCount">0</span></h3>
+      <div class="head-actions">
+        <a class="btn-ghost" href="/api/export" download>⬇ 导出 Excel</a>
+        <button class="btn-ghost" onclick="loadSaved()">↻ 刷新</button>
+      </div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-star">★</th>
+              <th>职位</th>
+              <th>公司</th>
+              <th>地点</th>
+              <th>校招/社招</th>
+              <th>进度</th>
+              <th>备注</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>📄 页面原文（用于逐字核对）</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-foot"><button class="btn-ghost" onclick="closeModal()">关闭</button></div>
+    </div>
+  </div>
+
+  <!-- 设置模态框 -->
+  <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>⚙️ 设置</h3>
+        <button class="modal-close" onclick="closeSettings()">×</button>
+      </div>
+      <div class="modal-body form">
+        <div class="key-status" id="keyStatus"></div>
+        <div class="form-row">
+           <label>DeepSeek API Key</label>
+           <input type="password" id="apiKeyInput" placeholder="sk-… （留空则不修改已保存的 Key）" autocomplete="off" />
+           <div class="hint">仅保存在本机 <code>settings.json</code>，用于调用 DeepSeek 抽取职位信息。<br>获取地址：platform.deepseek.com → API Keys。</div>
+        </div>
+        <div class="form-row">
+          <label>抽取模型</label>
+          <select id="modelSelect"></select>
+           <div class="hint">普通抽取使用 Chat；复杂页面可选择 Reasoner 进行深度推理。</div>
+        </div>
+        <div class="form-row">
+          <label>服务端口</label>
+           <input type="text" id="portInput" placeholder="5000" inputmode="numeric" autocomplete="off" />
+          <div class="hint">本地服务监听的端口（1–65535）。<b>修改后需重启服务</b>（关闭命令行重新运行 <code>python app.py</code>）才生效，重启后请访问新端口。</div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeSettings()">取消</button>
+        <button class="btn-primary" style="padding:10px 20px" onclick="saveSettings()">保存设置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STATUSES = {{ statuses | tojson }};
+    const RECRUIT_TYPES = {{ recruit_types | tojson }};
+    const STATUS_COLORS = {
+      "待投递": "#6f7891", "已投递": "#0f766e", "笔试中": "#7c3aed",
+      "面试中": "#d97706", "已offer": "#059669", "已淘汰": "#dc2626"
+    };
+    const sc = s => STATUS_COLORS[s] || "#6f7891";
+    let lastSourceText = "", currentFilter = "全部", allJobs = [], expandedId = null;
+
+    function esc(s) {
+      return (s || "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+    function attr(s) { return (s || "").replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+    function toast(msg, type) {
+      const box = document.getElementById('toasts');
+      const el = document.createElement('div');
+      el.className = 'toast ' + (type || '');
+      el.innerHTML = (type === 'ok' ? '✅ ' : type === 'err' ? '⚠️ ' : '') + esc(msg);
+      box.appendChild(el);
+      setTimeout(() => { el.classList.add('fade'); setTimeout(() => el.remove(), 300); }, 2600);
+    }
+
+    // ---------- 抓取（自动入库） ----------
+    async function scrape() {
+      const url = document.getElementById('url').value.trim();
+    const dynamic = document.getElementById('dynamic').checked;
+      const msg = document.getElementById('scrapeMsg');
+      const btn = document.getElementById('scrapeBtn');
+      if (!url) { msg.className = 'scrape-msg err'; msg.textContent = '请先粘贴职位网址'; return; }
+
+      btn.disabled = true;
+      msg.className = 'scrape-msg';
+      msg.innerHTML = '<span class="spinner"></span> 抓取中…' + (dynamic ? '动态渲染约需 10–20 秒，请稍候' : '');
+      try {
+        const res = await fetch('/api/scrape', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ url, dynamic })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '抓取失败');
+        lastSourceText = data.source_text || "";
+        const n = (data.jobs || []).length;
+        msg.className = 'scrape-msg ok';
+        msg.textContent = n ? `抓取成功，已自动加入 ${n} 条职位` : '未在该页面找到职位信息';
+        if (n) { document.getElementById('url').value = ''; toast(`已加入 ${n} 条职位`, 'ok'); }
+        await loadSaved();
+      } catch (e) {
+        msg.className = 'scrape-msg err';
+        msg.textContent = '错误：' + e.message;
+        toast(e.message, 'err');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ---------- 统计 + 筛选 ----------
+    function renderStats(jobs) {
+      const box = document.getElementById('stats');
+      const starred = jobs.filter(j => j.starred).length;
+      const cards = [
+        `<div class="stat"><div class="num">${jobs.length}</div><div class="lbl">职位总数</div></div>`,
+        `<div class="stat"><div class="num" style="color:var(--star)">${starred}</div><div class="lbl"><span class="dot" style="background:var(--star)"></span>已标星</div></div>`,
+      ];
+      STATUSES.forEach(s => {
+        const n = jobs.filter(j => j.status === s).length;
+        cards.push(`<div class="stat"><div class="num" style="color:${sc(s)}">${n}</div>
+          <div class="lbl"><span class="dot" style="background:${sc(s)}"></span>${s}</div></div>`);
+      });
+      box.innerHTML = cards.join('');
+    }
+
+    function renderFilters(jobs) {
+      const counts = { "全部": jobs.length, "★ 已标星": jobs.filter(j => j.starred).length };
+      STATUSES.forEach(s => counts[s] = jobs.filter(j => j.status === s).length);
+      const tabs = ["全部", "★ 已标星", ...STATUSES];
+      document.getElementById('filters').innerHTML = tabs.map(t => {
+        const isStatus = STATUSES.includes(t);
+        const dot = isStatus ? `<span class="c-dot" style="background:${sc(t)}"></span>` : '';
+        return `<div class="chip ${t === currentFilter ? 'active' : ''}" onclick="setFilter('${t}')">
+          ${dot}${t} <span class="c-num">${counts[t] || 0}</span></div>`;
+      }).join('');
+    }
+    function setFilter(f) { currentFilter = f; renderTable(); renderFilters(allJobs); }
+
+    function applyFilter(jobs) {
+      if (currentFilter === "全部") return jobs;
+      if (currentFilter === "★ 已标星") return jobs.filter(j => j.starred);
+      return jobs.filter(j => j.status === currentFilter);
+    }
+
+    async function loadSaved() {
+      try {
+        const res = await fetch('/api/jobs');
+        const data = await res.json();
+        allJobs = data.jobs || [];
+        document.getElementById('savedCount').textContent = allJobs.length;
+        renderStats(allJobs);
+        renderFilters(allJobs);
+        renderTable();
+      } catch (e) {
+        document.getElementById('tbody').innerHTML =
+          `<tr><td colspan="8">${emptyState('⚠️', '加载失败', e.message)}</td></tr>`;
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tbody');
+      const jobs = applyFilter(allJobs);
+      if (!jobs.length) {
+        const msg = allJobs.length
+          ? emptyState('🗂️', `「${currentFilter}」暂无职位`, '切换上方筛选查看其他分类')
+          : emptyState('📭', '名单还是空的', '在上方粘贴职位链接抓取，结果会自动出现在这里');
+        tbody.innerHTML = `<tr><td colspan="8">${msg}</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = jobs.map(rowHtml).join('');
+    }
+
+    function rowHtml(j) {
+      const statusOpts = STATUSES.map(s => `<option value="${s}" ${s === j.status ? 'selected' : ''}>${s}</option>`).join('');
+      const rtOpts = RECRUIT_TYPES.map(s => `<option value="${s}" ${s === j.recruit_type ? 'selected' : ''}>${s}</option>`).join('');
+      const verb = j.description_verbatim ? `<span class="verbatim ok verb">✓原文</span>` : '';
+      const expanded = expandedId === j.id;
+      return `<tr class="job-row ${expanded ? 'expanded' : ''}" onclick="toggleRow('${j.id}', event)">
+        <td class="col-star">
+          <button class="star-btn ${j.starred ? 'on' : ''}" onclick="toggleStar('${j.id}', event)" title="标记重点">${j.starred ? '★' : '☆'}</button>
+        </td>
+        <td class="col-title"><span class="expand-arrow">▶</span> ${esc(j.title || '(无标题)')} ${verb}
+          ${j.employment_type ? `<div class="title-sub">${esc(j.employment_type)}</div>` : ''}
+        </td>
+        <td class="cell-muted">${esc(j.company || '—')}</td>
+        <td class="cell-muted">${esc(j.location || '—')}</td>
+        <td onclick="event.stopPropagation()">
+          <select onchange="patchField('${j.id}', 'recruit_type', this.value)">${rtOpts}</select>
+        </td>
+        <td onclick="event.stopPropagation()">
+          <select onchange="patchField('${j.id}', 'status', this.value)" style="color:${sc(j.status)};font-weight:600">${statusOpts}</select>
+        </td>
+        <td onclick="event.stopPropagation()">
+          <input class="note-input" placeholder="备注…" value="${esc(j.note || '')}" onblur="patchField('${j.id}', 'note', this.value)" />
+        </td>
+        <td onclick="event.stopPropagation()">
+          <div class="row-actions">
+            <button class="icon-btn" onclick="copyJob('${j.id}', event)" title="复制职位信息">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3">
+                <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+                <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-7A1.5 1.5 0 0 0 1 3.5v7A1.5 1.5 0 0 0 2.5 12H4"/>
+              </svg>
+            </button>
+            <button class="icon-btn del" onclick="removeJob('${j.id}', '${attr(j.title)}')" title="删除">🗑</button>
+          </div>
+        </td>
+      </tr>
+      ${expanded ? detailRow(j) : ''}`;
+    }
+
+    function detailRow(j) {
+      const reqs = (j.requirements || []).map(r => `<li>${esc(r)}</li>`).join('');
+      const verb = j.description_verbatim
+        ? `<span class="verbatim ok">✓ 原文</span>`
+        : `<span class="verbatim warn">⚠ 可能经整理</span>`;
+      return `<tr class="detail-row"><td colspan="8"><div class="detail-inner">
+        ${j.description ? `<div class="desc-head">职位描述 ${verb}</div><div class="desc">${esc(j.description)}</div>` : '<div class="cell-muted">（无描述）</div>'}
+        ${reqs ? `<div class="desc-head">任职要求</div><ul class="reqs">${reqs}</ul>` : ''}
+        <div class="detail-foot">
+           ${j.source_url ? `<a class="src-link" href="${esc(j.source_url)}" target="_blank" rel="noopener noreferrer">↗ 打开原页面</a>` : ''}
+          ${lastSourceText ? `<button class="src-link" style="background:none;cursor:pointer" onclick="openSource()">📄 查看抓取原文</button>` : ''}
+        </div>
+      </div></td></tr>`;
+    }
+
+    function toggleRow(id, e) {
+      expandedId = (expandedId === id) ? null : id;
+      renderTable();
+    }
+
+    async function toggleStar(id, e) {
+      e.stopPropagation();
+      const j = allJobs.find(x => x.id === id);
+      if (!j) return;
+      const next = !j.starred;
+      j.starred = next;  // 乐观更新
+      renderTable(); renderStats(allJobs); renderFilters(allJobs);
+      await patchField(id, 'starred', next, true);
+    }
+
+    async function patchField(id, field, value, silent) {
+      const j = allJobs.find(x => x.id === id);
+      if (j) j[field] = value;
+      try {
+        const res = await fetch('/api/jobs/' + id, {
+          method: 'PATCH', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ [field]: value })
+        });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error || '更新失败'); }
+        if (field === 'status') { renderTable(); renderStats(allJobs); renderFilters(allJobs); }
+        if (!silent && field !== 'note') {
+          const label = field === 'status' ? '进度' : field === 'recruit_type' ? '类型' : '';
+          if (label) toast(`${label}已更新`, 'ok');
+        }
+      } catch (e) { toast('更新失败：' + e.message, 'err'); }
+    }
+
+    function jobToText(j) {
+      const lines = [
+        `职位：${j.title || ''}`,
+        `公司：${j.company || ''}`,
+        `地点：${j.location || ''}`,
+        `薪资：${j.salary || ''}`,
+        `工作性质：${j.employment_type || ''}`,
+      ];
+      if (j.description) lines.push('', '职位描述：', j.description);
+      if ((j.requirements || []).length) {
+        lines.push('', '任职要求：');
+        j.requirements.forEach((r, i) => lines.push(`${i + 1}. ${r}`));
+      }
+      lines.push('', `来源链接：${j.source_url || ''}`);
+      return lines.join('\n');
+    }
+
+    async function copyJob(id, e) {
+      e.stopPropagation();
+      const j = allJobs.find(x => x.id === id);
+      if (!j) return;
+      try {
+        await navigator.clipboard.writeText(jobToText(j));
+        toast('已复制职位信息', 'ok');
+      } catch (err) {
+        toast('复制失败：' + err.message, 'err');
+      }
+    }
+
+    async function removeJob(id, title) {
+      if (!confirm('确定删除「' + (title || '该职位') + '」？')) return;
+      try {
+        const res = await fetch('/api/jobs/' + id, { method: 'DELETE' });
+        if (!res.ok) { const d = await res.json(); throw new Error(d.error || '删除失败'); }
+        if (expandedId === id) expandedId = null;
+        await loadSaved(); toast('已删除', 'ok');
+      } catch (e) { toast('删除失败：' + e.message, 'err'); }
+    }
+
+    function openSource() {
+      document.getElementById('modalBody').textContent = lastSourceText;
+      document.getElementById('modal').classList.add('show');
+    }
+    function closeModal() { document.getElementById('modal').classList.remove('show'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeSettings(); } });
+
+    // ---------- 设置：API Key + 模型 ----------
+    let settingsState = { has_api_key: false };
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        settingsState = await res.json();
+        // 渲染模型下拉
+        const sel = document.getElementById('modelSelect');
+        sel.innerHTML = (settingsState.model_choices || [])
+          .map(m => `<option value="${m.id}" ${m.id === settingsState.model ? 'selected' : ''}>${esc(m.label)}</option>`).join('');
+        // 当前端口
+        document.getElementById('portInput').value = settingsState.port || '';
+        // 顶栏按钮：没配 Key 时高亮提醒
+        const btn = document.getElementById('settingsBtn');
+        btn.classList.toggle('warn', !settingsState.has_api_key);
+        btn.innerHTML = settingsState.has_api_key ? '⚙️ 设置' : '⚙️ 设置 · 未配置 Key';
+        renderKeyStatus();
+      } catch (e) { /* 设置不可用不阻塞主流程 */ }
+    }
+
+    function renderKeyStatus() {
+      const el = document.getElementById('keyStatus');
+      if (settingsState.has_api_key) {
+        el.className = 'key-status ok';
+        el.innerHTML = `🔑 已配置 API Key：<code>${esc(settingsState.api_key_masked)}</code>`;
+      } else {
+        el.className = 'key-status no';
+         el.innerHTML = '⚠️ 尚未配置 API Key，抓取将无法调用 DeepSeek 抽取。';
+      }
+    }
+
+    function openSettings() {
+      loadSettings();
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('settingsModal').classList.add('show');
+    }
+    function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+
+    async function saveSettings() {
+      const api_key = document.getElementById('apiKeyInput').value;  // 空=不改
+      const model = document.getElementById('modelSelect').value;
+      const portRaw = document.getElementById('portInput').value.trim();
+      const prevPort = settingsState.port;
+      // 端口前端先校验，避免无谓请求
+      if (portRaw !== '') {
+        const p = Number(portRaw);
+        if (!Number.isInteger(p) || p < 1 || p > 65535) {
+          toast('端口需为 1–65535 的整数', 'err'); return;
+        }
+      }
+      try {
+        const body = { model };
+        if (api_key.trim() !== '') body.api_key = api_key;  // 仅在填了时才动 Key
+        if (portRaw !== '') body.port = Number(portRaw);
+        const res = await fetch('/api/settings', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || '保存失败'); }
+        settingsState = await res.json();
+        renderKeyStatus();
+        await loadSettings();
+        const portChanged = portRaw !== '' && Number(portRaw) !== prevPort;
+        toast(portChanged ? `设置已保存，端口将在重启后变为 ${portRaw}` : '设置已保存', 'ok');
+        closeSettings();
+      } catch (e) { toast('保存失败：' + e.message, 'err'); }
+    }
+
+    function emptyState(icon, title, sub) {
+      return `<div class="empty"><div class="big">${icon}</div><div class="t">${esc(title)}</div><div class="s">${esc(sub)}</div></div>`;
+    }
+
+    loadSettings();
+    loadSaved();
+  </script>
+</body>
+</html>

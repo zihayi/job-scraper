@@ -1,0 +1,7 @@
+beautifulsoup4>=4.12,<5
+Flask>=3.0,<4
+openpyxl>=3.1,<4
+openai>=1.65,<2
+playwright>=1.50,<2
+requests>=2.32,<3
+truststore>=0.10,<1
