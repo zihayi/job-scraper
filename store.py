@@ -13,7 +13,8 @@ from typing import Any
 
 STATUSES = ["待投递", "已投递", "笔试中", "面试中", "已offer", "已淘汰"]
 RECRUIT_TYPES = ["未分类", "校招", "社招"]
-EDITABLE_FIELDS = {"status", "recruit_type", "note", "starred"}
+TEXT_FIELDS = {"title", "company", "location"}
+EDITABLE_FIELDS = {"status", "recruit_type", "note", "starred", *TEXT_FIELDS}
 
 
 class JobStore:
@@ -92,6 +93,7 @@ class JobStore:
         return added
 
     def update(self, job_id: str, changes: dict[str, Any]) -> dict[str, Any]:
+        changes = deepcopy(changes)
         unknown = set(changes) - EDITABLE_FIELDS
         if unknown:
             raise ValueError(f"不允许更新字段：{', '.join(sorted(unknown))}")
@@ -103,6 +105,14 @@ class JobStore:
             raise ValueError("备注必须是字符串")
         if "starred" in changes and not isinstance(changes["starred"], bool):
             raise ValueError("标星值必须为布尔值")
+        for field in TEXT_FIELDS & changes.keys():
+            if not isinstance(changes[field], str):
+                raise ValueError("职位、公司和地点必须是字符串")
+            changes[field] = changes[field].strip()
+            if len(changes[field]) > 200:
+                raise ValueError("职位、公司和地点不能超过 200 个字符")
+        if "title" in changes and not changes["title"]:
+            raise ValueError("职位名称不能为空")
 
         with self._lock:
             jobs = self._read()

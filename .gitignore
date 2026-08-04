@@ -4,4 +4,5 @@ __pycache__/
 result.json
 saved_jobs.json
 settings.json
+chat_history.json
 *.xlsx

@@ -7,7 +7,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from extract import DEFAULT_MODEL, MODEL_CHOICES
+from extract import CHAT_MODEL, DEFAULT_MODEL, MODEL_CHOICES
 
 
 DEFAULT_PORT = 5000
@@ -48,16 +48,30 @@ class SettingsStore:
         with self._lock:
             saved = self._read()
         api_key = str(saved.get("api_key") or os.getenv("DEEPSEEK_API_KEY") or "")
-        model = str(saved.get("model") or os.getenv("JOB_SCRAPER_MODEL") or DEFAULT_MODEL)
-        if model not in {choice["id"] for choice in MODEL_CHOICES}:
-            model = DEFAULT_MODEL
+        allowed_models = {choice["id"] for choice in MODEL_CHOICES}
+        extraction_model = str(
+            saved.get("extraction_model")
+            or saved.get("model")
+            or os.getenv("JOB_SCRAPER_MODEL")
+            or DEFAULT_MODEL
+        )
+        chat_model = str(saved.get("chat_model") or os.getenv("JOB_CHAT_MODEL") or CHAT_MODEL)
+        if extraction_model not in allowed_models:
+            extraction_model = DEFAULT_MODEL
+        if chat_model not in allowed_models:
+            chat_model = CHAT_MODEL
         try:
             port = int(saved.get("port") or os.getenv("JOB_SCRAPER_PORT") or DEFAULT_PORT)
         except (TypeError, ValueError):
             port = DEFAULT_PORT
         if not 1 <= port <= 65535:
             port = DEFAULT_PORT
-        return {"api_key": api_key, "model": model, "port": port}
+        return {
+            "api_key": api_key,
+            "extraction_model": extraction_model,
+            "chat_model": chat_model,
+            "port": port,
+        }
 
     def public(self) -> dict[str, Any]:
         values = self.effective()
@@ -71,13 +85,17 @@ class SettingsStore:
         return {
             "has_api_key": bool(key),
             "api_key_masked": masked,
-            "model": values["model"],
+            "extraction_model": values["extraction_model"],
+            "chat_model": values["chat_model"],
             "model_choices": MODEL_CHOICES,
             "port": values["port"],
         }
 
     def update(self, changes: dict[str, Any]) -> dict[str, Any]:
         allowed_models = {choice["id"] for choice in MODEL_CHOICES}
+        changes = dict(changes)
+        if "model" in changes and "extraction_model" not in changes:
+            changes["extraction_model"] = changes["model"]
         with self._lock:
             saved = self._read()
             if "api_key" in changes:
@@ -88,11 +106,18 @@ class SettingsStore:
                     saved["api_key"] = api_key.strip()
                 else:
                     saved.pop("api_key", None)
-            if "model" in changes:
-                model = changes["model"]
+            for field, label in (
+                ("extraction_model", "抽取模型"),
+                ("chat_model", "聊天模型"),
+            ):
+                if field not in changes:
+                    continue
+                model = changes[field]
                 if model not in allowed_models:
-                    raise ValueError("不支持的抽取模型")
-                saved["model"] = model
+                    raise ValueError(f"不支持的{label}")
+                saved[field] = model
+            if "extraction_model" in changes:
+                saved.pop("model", None)
             if "port" in changes:
                 port = changes["port"]
                 if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:

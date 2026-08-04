@@ -27,15 +27,16 @@ pip install -r requirements.txt
 
 ### API Key 与模型（推荐：在网页里填）
 
-启动网页后，点右上角 **设置**，即可直接填写 **DeepSeek API Key** 并选择抽取模型
-（DeepSeek Chat 默认 / DeepSeek Reasoner 深度推理）。设置保存在本机 `settings.json`，
-重启后仍生效。
+启动网页后，点右上角 **设置**，即可直接填写 **DeepSeek API Key**，并分别选择岗位抽取模型
+和岗位聊天模型。抽取默认使用 DeepSeek Chat，聊天默认使用 DeepSeek Reasoner。设置保存在
+本机 `settings.json`，重启后仍生效。
 
 也可用环境变量（命令行模式下使用，或作为网页未填时的回退）：
 
 ```bash
 export DEEPSEEK_API_KEY=sk-...                 # Windows PowerShell: $env:DEEPSEEK_API_KEY="sk-..."
-export JOB_SCRAPER_MODEL=deepseek-reasoner     # 可选，换模型
+export JOB_SCRAPER_MODEL=deepseek-chat         # 可选，岗位抽取模型
+export JOB_CHAT_MODEL=deepseek-reasoner        # 可选，岗位聊天模型
 ```
 
 生效优先级：**网页设置 > 环境变量 > 默认值**。
@@ -57,9 +58,12 @@ python app.py
 - 自动收藏抓取结果到跟踪列表
 - 为每条收藏设置求职进度（待投递 / 已投递 / 笔试中 / 面试中 / 已offer / 已淘汰）和备注
 - 标星重点职位并按进度筛选
+- 使用 DeepSeek 与已保存岗位进行问答、比较和总结，可切换右侧栏或全页面聊天
+- 聊天选择 DeepSeek Reasoner 时，点击“查看思维链”可展开详细分析过程
 - 导出 Excel 职位名单
 
 收藏数据存在 `saved_jobs.json`（可用 `JOB_STORE_PATH` 改路径）。
+聊天历史存在 `chat_history.json`（可用 `CHAT_STORE_PATH` 改路径）。
 
 ### 方式二：命令行
 
@@ -75,6 +79,7 @@ python main.py <url> --dynamic -o result.json            # 指定输出
 
 每条职位包含：`title`、`company`、`location`、`salary`、`employment_type`、
 `description`、`requirements`、`url`。缺失的字段会留空，不会编造。
+`location` 统一保存为城市名，多个城市使用中文顿号分隔，例如 `深圳、上海`。
 
 ## 已知限制
 
