@@ -10,7 +10,7 @@ from chat_markdown import render_markdown
 from chat_store import ChatStore
 from clean import clean_html
 from config import SettingsStore
-from extract import _normalize_location, chat_about_jobs
+from extract import chat_about_jobs, normalize_location
 from store import JobStore
 
 
@@ -22,9 +22,9 @@ class CleanHtmlTests(unittest.TestCase):
 
 class ExtractTests(unittest.TestCase):
     def test_normalizes_city_names_and_delimiters(self):
-        self.assertEqual(_normalize_location("深圳市，上海市、深圳市"), "深圳、上海")
-        self.assertEqual(_normalize_location("北京市海淀区/重庆市渝北区"), "北京、重庆")
-        self.assertEqual(_normalize_location("广东省深圳市南山区"), "深圳")
+        self.assertEqual(normalize_location("深圳市，上海市、深圳市"), "深圳、上海")
+        self.assertEqual(normalize_location("北京市海淀区/重庆市渝北区"), "北京、重庆")
+        self.assertEqual(normalize_location("广东省深圳市南山区"), "深圳")
 
     def test_streams_reasoning_and_final_answer(self):
         class FakeStream(list):

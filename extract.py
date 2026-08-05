@@ -33,7 +33,7 @@ def _text(value: Any) -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def _normalize_location(value: Any) -> str:
+def normalize_location(value: Any) -> str:
     parts = re.split(r"[、,，;；/|]+", _text(value))
     normalized: list[str] = []
     for part in parts:
@@ -68,7 +68,7 @@ def _normalize_job(raw: Any, source_url: str) -> dict[str, Any] | None:
     return {
         "title": title,
         "company": _text(raw.get("company")),
-        "location": _normalize_location(raw.get("location")),
+        "location": normalize_location(raw.get("location")),
         "salary": _text(raw.get("salary")),
         "employment_type": _text(raw.get("employment_type")),
         "description": _text(raw.get("description")),

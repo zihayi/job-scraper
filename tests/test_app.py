@@ -42,6 +42,10 @@ class AppTests(unittest.TestCase):
         self.assertIn('id="chatDockBtn"', page)
         self.assertIn('id="chatFullBtn"', page)
         self.assertIn('id="chatSettingsBtn"', page)
+        self.assertIn('id="chatQuestionBtn"', page)
+        self.assertIn('id="chatQuestionList"', page)
+        self.assertIn('id="addJobBtn"', page)
+        self.assertIn('id="addJobModal"', page)
 
         settings = self.client.get("/api/settings").get_json()
         self.assertFalse(settings["has_api_key"])
@@ -92,6 +96,33 @@ class AppTests(unittest.TestCase):
         response = self.client.delete(f"/api/jobs/{job['id']}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.client.get("/api/jobs").get_json()["jobs"], [])
+
+    def test_manually_creates_job_with_tracking_fields(self):
+        payload = {
+            "title": "嵌入式软件工程师",
+            "company": "示例科技",
+            "location": "深圳市、上海市",
+            "recruit_type": "校招",
+            "status": "已投递",
+            "employment_type": "全职",
+            "salary": "20k-30k",
+            "source_url": "https://example.com/manual-job",
+            "description": "负责嵌入式系统开发",
+            "requirements": ["熟悉 C++", "熟悉 Linux"],
+            "note": "朋友内推",
+        }
+        response = self.client.post("/api/jobs", json=payload)
+        self.assertEqual(response.status_code, 201)
+        job = response.get_json()["job"]
+        self.assertEqual(job["location"], "深圳、上海")
+        self.assertEqual(job["status"], "已投递")
+        self.assertEqual(job["note"], "朋友内推")
+        self.assertEqual(job["requirements"], ["熟悉 C++", "熟悉 Linux"])
+
+        duplicate = self.client.post("/api/jobs", json=payload)
+        self.assertEqual(duplicate.status_code, 409)
+        invalid = self.client.post("/api/jobs", json={"title": "测试", "source_url": "not-a-url"})
+        self.assertEqual(invalid.status_code, 400)
 
     def test_scrape_requires_api_key(self):
         response = self.client.post("/api/scrape", json={"url": "https://example.com", "dynamic": False})

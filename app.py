@@ -12,7 +12,7 @@ from chat_markdown import render_chat_messages
 from chat_store import ChatStore
 from clean import clean_html
 from config import SettingsStore
-from extract import extract_jobs, stream_chat_about_jobs
+from extract import extract_jobs, normalize_location, stream_chat_about_jobs
 from fetch import fetch_html, validate_url
 from fetch_dynamic import fetch_dynamic_html
 from store import JobStore, RECRUIT_TYPES, STATUSES
@@ -33,6 +33,63 @@ def index():
 @app.get("/api/jobs")
 def list_jobs():
     return jsonify(jobs=job_store.list())
+
+
+@app.post("/api/jobs")
+def create_job():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify(error="请求格式无效"), 400
+    try:
+        title = payload.get("title")
+        if not isinstance(title, str) or not title.strip():
+            raise ValueError("职位名称不能为空")
+        if len(title.strip()) > 200:
+            raise ValueError("职位名称不能超过 200 个字符")
+
+        string_fields = (
+            "company", "location", "salary", "employment_type", "description",
+            "source_url", "note",
+        )
+        values: dict[str, str] = {}
+        for field in string_fields:
+            value = payload.get(field, "")
+            if not isinstance(value, str):
+                raise ValueError(f"字段 {field} 必须是字符串")
+            values[field] = value.strip()
+        if values["source_url"]:
+            values["source_url"] = validate_url(values["source_url"])
+
+        recruit_type = payload.get("recruit_type", "未分类")
+        status = payload.get("status", "待投递")
+        if recruit_type not in RECRUIT_TYPES:
+            raise ValueError("无效的招聘类型")
+        if status not in STATUSES:
+            raise ValueError("无效的求职进度")
+        requirements = payload.get("requirements", [])
+        if not isinstance(requirements, list) or not all(isinstance(item, str) for item in requirements):
+            raise ValueError("任职要求必须是字符串数组")
+
+        source_url = values["source_url"]
+        added = job_store.add([{
+            "title": title.strip(),
+            "company": values["company"],
+            "location": normalize_location(values["location"]),
+            "salary": values["salary"],
+            "employment_type": values["employment_type"],
+            "description": values["description"],
+            "requirements": [item.strip() for item in requirements if item.strip()],
+            "url": source_url,
+            "source_url": source_url,
+            "recruit_type": recruit_type,
+            "description_verbatim": False,
+        }])
+        if not added:
+            return jsonify(error="相同职位已存在"), 409
+        job = job_store.update(added[0]["id"], {"status": status, "note": values["note"]})
+        return jsonify(job=job), 201
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
 
 
 @app.patch("/api/jobs/<job_id>")

@@ -172,11 +172,28 @@
     .chat-view-toggle { display: inline-flex; padding: 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg-soft); }
     .chat-mode { padding: 4px 8px; border-radius: 6px; background: transparent; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
     .chat-mode.active { background: var(--panel); color: var(--brand); box-shadow: 0 1px 2px rgba(28,37,48,.08); }
+    .chat-question-toggle { display: none; padding: 5px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text-2); font-size: 11.5px; white-space: nowrap; }
+    .chat-question-toggle:hover { color: var(--brand); border-color: var(--brand); }
+    .chat-panel.fullscreen .chat-question-toggle { display: inline-flex; }
     .chat-head-actions { display: flex; align-items: center; gap: 10px; }
     .chat-clear { padding: 5px 10px; background: transparent; color: var(--muted); font-size: 12px; border: 1px solid var(--line); border-radius: 8px; }
     .chat-clear:hover { color: var(--danger); border-color: rgba(220,38,38,.35); }
     .chat-settings { display: none; color: var(--text-2); }
     .chat-panel.fullscreen .chat-settings { display: inline-flex; }
+    .chat-drawer-backdrop { position: absolute; inset: 0; z-index: 6; display: none; background: rgba(28,37,48,.18); backdrop-filter: blur(1px); }
+    .chat-question-drawer { position: absolute; inset: 0 auto 0 0; z-index: 7; width: min(320px, 86vw); display: flex; flex-direction: column; transform: translateX(-102%); background: var(--panel); border-right: 1px solid var(--line); box-shadow: 12px 0 30px rgba(28,37,48,.12); transition: transform .22s ease; }
+    .chat-panel.questions-open .chat-drawer-backdrop { display: block; }
+    .chat-panel.questions-open .chat-question-drawer { transform: translateX(0); }
+    .chat-question-head { min-height: 58px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+    .chat-question-head strong { font-size: 14px; }
+    .chat-question-list { flex: 1; padding: 10px; overflow-y: auto; }
+    .chat-question-item { width: 100%; margin-bottom: 6px; padding: 10px 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--text-2); text-align: left; font-size: 12.5px; line-height: 1.45; }
+    .chat-question-item:hover { border-color: var(--line); background: var(--bg-soft); color: var(--text); }
+    .chat-question-number { display: block; margin-bottom: 3px; color: var(--muted); font-size: 10.5px; }
+    .chat-question-text { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+    .chat-question-empty { padding: 34px 16px; color: var(--muted); text-align: center; font-size: 12.5px; }
+    .chat-message.located { animation: locateMessage 1.2s ease; }
+    @keyframes locateMessage { 0%, 45% { background: var(--brand-soft); } 100% { background: transparent; } }
     .chat-body { min-height: 0; flex: 1; padding: 0; overflow: hidden; white-space: normal; background: #f7f9fa; }
     .chat-messages { height: 100%; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; }
     .chat-empty { margin: auto; max-width: 430px; padding: 30px; text-align: center; color: var(--muted); }
@@ -217,13 +234,14 @@
     .chat-bubble th, .chat-bubble td { padding: 6px 8px; border: 1px solid var(--line); text-align: left; }
     .chat-bubble th { background: var(--panel-2); color: var(--text); }
     .chat-bubble hr { margin: 9px 0; border: 0; border-top: 1px solid var(--line); }
-    .chat-composer { align-items: flex-end; }
-    .chat-input { flex: 1; min-height: 44px; max-height: 130px; resize: vertical; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; }
+    .chat-composer { position: relative; align-items: flex-end; padding: 14px 18px; }
+    .chat-input { flex: none; width: 100%; min-height: 52px; max-height: 130px; resize: vertical; padding: 13px 96px 13px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--bg); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; }
     .chat-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
-    .chat-send { min-width: 76px; padding: 12px 18px; }
+    .chat-send { position: absolute; right: 26px; bottom: 22px; min-width: 70px; padding: 9px 15px; }
     .chat-panel.fullscreen .modal-head { padding-inline: max(24px, calc((100vw - 1040px) / 2)); }
     .chat-panel.fullscreen .chat-messages { width: 100%; margin: 0; padding: 26px max(24px, calc((100vw - 1040px) / 2)); }
     .chat-panel.fullscreen .chat-composer { width: 100%; margin: 0; padding: 16px max(24px, calc((100vw - 1040px) / 2)) 18px; }
+    .chat-panel.fullscreen .chat-send { right: max(32px, calc((100vw - 1040px) / 2 + 8px)); bottom: 26px; }
 
     /* settings form */
     .form-row { margin-bottom: 18px; }
@@ -233,7 +251,11 @@
       width: 100%; max-width: 100%; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line);
       border-radius: 10px; font-size: 13.5px; color: var(--text);
     }
-    .form-row input:focus, .form-row select:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .form-row textarea { width: 100%; min-height: 88px; resize: vertical; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.55; }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+    .form-grid .span-2 { grid-column: 1 / -1; }
+    .job-form-modal { max-width: 780px; }
     .key-status { font-size: 12.5px; padding: 8px 12px; border-radius: 9px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .key-status.ok { background: rgba(52,211,153,.12); color: var(--ok); border: 1px solid rgba(52,211,153,.25); }
     .key-status.no { background: rgba(251,191,36,.12); color: var(--warn); border: 1px solid rgba(251,191,36,.25); }
@@ -251,8 +273,12 @@
       .chat-panel.docked { inset: 57px 0 0; }
       .chat-messages { padding: 16px; }
       .chat-message { max-width: 92%; }
-      .chat-composer { padding: 12px; }
+      .chat-composer { padding: 12px 16px; }
+      .chat-send { right: 24px; bottom: 20px; }
+      .chat-panel.fullscreen .chat-send { right: 32px; bottom: 26px; }
       .chat-panel .modal-head { flex-wrap: wrap; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .span-2 { grid-column: auto; }
     }
   </style>
 </head>
@@ -291,6 +317,7 @@
         <div class="section-head">
           <h3>📋 职位名单 <span class="count-pill" id="savedCount">0</span></h3>
           <div class="head-actions">
+            <button class="btn-ghost" id="addJobBtn" onclick="openAddJob()">＋ 添加职位</button>
             <a class="btn-ghost" href="/api/export" download>⬇ 导出 Excel</a>
             <button class="btn-ghost" onclick="loadSaved()">↻ 刷新</button>
           </div>
@@ -325,6 +352,7 @@
               <button class="chat-mode" id="chatDockBtn" onclick="setChatMode('dock')">右侧栏</button>
               <button class="chat-mode" id="chatFullBtn" onclick="setChatMode('full')">全页面</button>
             </div>
+            <button class="chat-question-toggle" id="chatQuestionBtn" onclick="toggleChatQuestions()">☰ 提问记录</button>
           </div>
           <div class="chat-head-actions">
             <button class="chat-clear" onclick="clearChat()">清空</button>
@@ -332,14 +360,84 @@
             <button class="modal-close" onclick="closeChat()">×</button>
           </div>
         </div>
+        <div class="chat-drawer-backdrop" onclick="closeChatQuestions()"></div>
+        <aside class="chat-question-drawer" aria-label="提问记录">
+          <div class="chat-question-head">
+            <strong>提问记录</strong>
+            <button class="modal-close" onclick="closeChatQuestions()">×</button>
+          </div>
+          <div class="chat-question-list" id="chatQuestionList"></div>
+        </aside>
         <div class="modal-body chat-body">
           <div class="chat-messages" id="chatMessages"></div>
         </div>
         <div class="modal-foot chat-composer">
-          <textarea class="chat-input" id="chatInput" maxlength="4000" placeholder="例如：比较这些岗位，哪些更适合 Python 后端方向？" onkeydown="handleChatKeydown(event)"></textarea>
+          <textarea class="chat-input" id="chatInput" maxlength="4000" placeholder="请输入内容" onkeydown="handleChatKeydown(event)"></textarea>
           <button class="btn-primary chat-send" id="chatSendBtn" onclick="sendChat()">发送</button>
         </div>
       </aside>
+    </div>
+  </div>
+
+  <!-- 手动添加职位 -->
+  <div class="modal-overlay" id="addJobModal" onclick="if(event.target===this)closeAddJob()">
+    <div class="modal job-form-modal">
+      <div class="modal-head">
+        <h3>＋ 手动添加职位</h3>
+        <button class="modal-close" onclick="closeAddJob()">×</button>
+      </div>
+      <div class="modal-body form">
+        <div class="form-grid">
+          <div class="form-row span-2">
+            <label for="manualTitle">职位名称 *</label>
+            <input type="text" id="manualTitle" maxlength="200" placeholder="例如：嵌入式软件工程师" />
+          </div>
+          <div class="form-row">
+            <label for="manualCompany">公司</label>
+            <input type="text" id="manualCompany" maxlength="200" placeholder="公司名称" />
+          </div>
+          <div class="form-row">
+            <label for="manualLocation">地点</label>
+            <input type="text" id="manualLocation" maxlength="200" placeholder="多个城市用顿号分隔" />
+          </div>
+          <div class="form-row">
+            <label for="manualRecruitType">校招 / 社招</label>
+            <select id="manualRecruitType"></select>
+          </div>
+          <div class="form-row">
+            <label for="manualStatus">求职进度</label>
+            <select id="manualStatus"></select>
+          </div>
+          <div class="form-row">
+            <label for="manualEmploymentType">工作性质</label>
+            <input type="text" id="manualEmploymentType" placeholder="全职、实习等" />
+          </div>
+          <div class="form-row">
+            <label for="manualSalary">薪资</label>
+            <input type="text" id="manualSalary" placeholder="例如：20k–30k" />
+          </div>
+          <div class="form-row span-2">
+            <label for="manualSourceUrl">来源链接</label>
+            <input type="text" id="manualSourceUrl" placeholder="https://..." />
+          </div>
+          <div class="form-row span-2">
+            <label for="manualDescription">职位描述</label>
+            <textarea id="manualDescription" placeholder="填写岗位职责和工作内容"></textarea>
+          </div>
+          <div class="form-row span-2">
+            <label for="manualRequirements">任职要求</label>
+            <textarea id="manualRequirements" placeholder="每行填写一条要求"></textarea>
+          </div>
+          <div class="form-row span-2">
+            <label for="manualNote">备注</label>
+            <input type="text" id="manualNote" placeholder="投递计划、内推人等" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" onclick="closeAddJob()">取消</button>
+        <button class="btn-primary" id="createJobBtn" style="padding:10px 20px" onclick="createManualJob()">添加职位</button>
+      </div>
     </div>
   </div>
 
@@ -711,7 +809,62 @@
       document.getElementById('modal').classList.add('show');
     }
     function closeModal() { document.getElementById('modal').classList.remove('show'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeChat(); closeSettings(); } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeAddJob(); closeChat(); closeSettings(); } });
+
+    // ---------- 手动添加职位 ----------
+    function openAddJob() {
+      ['manualTitle', 'manualCompany', 'manualLocation', 'manualEmploymentType', 'manualSalary',
+       'manualSourceUrl', 'manualDescription', 'manualRequirements', 'manualNote']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('manualRecruitType').innerHTML = RECRUIT_TYPES
+        .map(type => `<option value="${type}">${type}</option>`).join('');
+      document.getElementById('manualStatus').innerHTML = STATUSES
+        .map(status => `<option value="${status}">${status}</option>`).join('');
+      document.getElementById('addJobModal').classList.add('show');
+      setTimeout(() => document.getElementById('manualTitle').focus(), 0);
+    }
+
+    function closeAddJob() { document.getElementById('addJobModal').classList.remove('show'); }
+
+    async function createManualJob() {
+      const title = document.getElementById('manualTitle').value.trim();
+      if (!title) { toast('请填写职位名称', 'err'); return; }
+      const button = document.getElementById('createJobBtn');
+      const requirements = document.getElementById('manualRequirements').value
+        .split(/\r?\n/).map(item => item.trim()).filter(Boolean);
+      const payload = {
+        title,
+        company: document.getElementById('manualCompany').value,
+        location: document.getElementById('manualLocation').value,
+        recruit_type: document.getElementById('manualRecruitType').value,
+        status: document.getElementById('manualStatus').value,
+        employment_type: document.getElementById('manualEmploymentType').value,
+        salary: document.getElementById('manualSalary').value,
+        source_url: document.getElementById('manualSourceUrl').value,
+        description: document.getElementById('manualDescription').value,
+        requirements,
+        note: document.getElementById('manualNote').value,
+      };
+      button.disabled = true;
+      button.textContent = '添加中…';
+      try {
+        const res = await fetch('/api/jobs', {
+          method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '添加失败');
+        currentFilter = '全部';
+        Object.keys(facetFilters).forEach(field => facetFilters[field] = '');
+        closeAddJob();
+        await loadSaved();
+        toast(`已添加「${data.job.title}」`, 'ok');
+      } catch (e) {
+        toast('添加失败：' + e.message, 'err');
+      } finally {
+        button.disabled = false;
+        button.textContent = '添加职位';
+      }
+    }
 
     // ---------- 岗位问答 ----------
     let chatHistory = [], chatSending = false, chatMode = 'dock';
@@ -721,9 +874,10 @@
       if (!messages.length) {
         box.innerHTML = `<div class="chat-empty"><strong>向 DeepSeek 询问已保存岗位</strong>
           <span>可以比较公司与岗位、汇总任职要求、按地点或进度分析，也可以结合备注制定投递计划。</span></div>`;
+        renderQuestionHistory([]);
         return;
       }
-      box.innerHTML = messages.map(message => {
+      box.innerHTML = messages.map((message, index) => {
         const isUser = message.role === 'user';
         const content = isUser
           ? esc(message.content)
@@ -734,13 +888,47 @@
         const reasoning = showReasoning
           ? `<details class="chat-reasoning" ${message.streaming ? 'open' : ''}><summary>${message.streaming ? '思维链生成中…' : '查看思维链'}</summary><div class="chat-reasoning-body">${reasoningContent}</div></details>`
           : '';
-        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}">
+        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}" data-message-index="${index}">
           <div class="chat-role">${isUser ? '我' : 'DeepSeek'}</div>
           <div class="chat-bubble">${reasoning}${content}</div>
         </div>`;
       }).join('');
       box.scrollTop = box.scrollHeight;
       box.querySelectorAll('.chat-reasoning[open] .chat-reasoning-body').forEach(el => el.scrollTop = el.scrollHeight);
+      renderQuestionHistory(messages);
+    }
+
+    function renderQuestionHistory(messages) {
+      const questions = messages
+        .map((message, index) => ({ message, index }))
+        .filter(item => item.message.role === 'user');
+      const list = document.getElementById('chatQuestionList');
+      list.innerHTML = questions.length
+        ? questions.map((item, questionIndex) => `<button class="chat-question-item" onclick="jumpToQuestion(${item.index})">
+            <span class="chat-question-number">问题 ${questionIndex + 1}</span>
+            <span class="chat-question-text">${esc(item.message.content)}</span>
+          </button>`).join('')
+        : '<div class="chat-question-empty">还没有提问记录</div>';
+    }
+
+    function toggleChatQuestions() {
+      document.getElementById('chatModal').classList.toggle('questions-open');
+    }
+
+    function closeChatQuestions() {
+      document.getElementById('chatModal').classList.remove('questions-open');
+    }
+
+    function jumpToQuestion(index) {
+      closeChatQuestions();
+      requestAnimationFrame(() => {
+        const message = document.querySelector(`[data-message-index="${index}"]`);
+        if (!message) return;
+        message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        message.classList.remove('located');
+        void message.offsetWidth;
+        message.classList.add('located');
+      });
     }
 
     async function loadChat() {
@@ -764,6 +952,7 @@
       const layout = document.getElementById('jobsLayout');
       panel.classList.toggle('docked', mode === 'dock');
       panel.classList.toggle('fullscreen', mode === 'full');
+      if (mode !== 'full') closeChatQuestions();
       layout.classList.toggle('chat-docked', mode === 'dock' && panel.classList.contains('show'));
       document.body.classList.toggle('chat-full-open', mode === 'full' && panel.classList.contains('show'));
       document.getElementById('chatDockBtn').classList.toggle('active', mode === 'dock');
@@ -785,6 +974,7 @@
 
     function closeChat() {
       document.getElementById('chatModal').classList.remove('show');
+      closeChatQuestions();
       document.getElementById('jobsLayout').classList.remove('chat-docked');
       document.body.classList.remove('chat-full-open');
     }

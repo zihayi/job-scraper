@@ -54,10 +54,10 @@ class JobStore:
             return deepcopy(self._read())
 
     @staticmethod
-    def _identity(job: dict[str, Any]) -> tuple[str, str, str]:
+    def _identity(job: dict[str, Any]) -> tuple[str, str, str, str]:
         return tuple(
             str(job.get(field) or "").strip().casefold()
-            for field in ("source_url", "title", "location")
+            for field in ("source_url", "title", "company", "location")
         )
 
     def add(self, incoming: list[dict[str, Any]]) -> list[dict[str, Any]]:
