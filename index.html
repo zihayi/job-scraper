@@ -50,6 +50,8 @@
     .btn-primary { padding: 13px 24px; border-radius: 11px; font-size: 14px; font-weight: 600; color: #fff; background: var(--brand); }
     .btn-primary:hover { background: var(--brand-2); }
     .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-danger { padding: 10px 18px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 13px; font-weight: 600; }
+    .btn-danger:hover { background: #b91c1c; }
     .scrape-msg { margin-top: 14px; font-size: 13px; min-height: 18px; display: flex; align-items: center; gap: 8px; }
     .scrape-msg.err { color: var(--danger); }
     .scrape-msg.ok { color: var(--ok); }
@@ -103,6 +105,14 @@
     select { padding: 7px 10px; border-radius: 9px; font-size: 12.5px; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); cursor: pointer; max-width: 110px; }
     select:focus { outline: none; border-color: var(--brand); }
     .status-pill { font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; display: inline-block; }
+    .status-cell { min-width: 112px; padding-top: 7px; padding-bottom: 7px; }
+    .status-control { position: relative; min-height: 68px; }
+    .status-control select { position: absolute; top: 50%; left: 50%; margin: 0; transform: translate(-50%, -50%); }
+    .status-date { position: absolute; right: 0; bottom: 0; left: 0; color: var(--muted); font-size: 10.5px; line-height: 1.2; text-align: center; white-space: nowrap; }
+    .status-history { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 7px; }
+    .status-history-item { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text-2); font-size: 11.5px; }
+    .status-history-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; }
+    .status-history-time { color: var(--muted); }
     .rt-pill { font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
     .rt-pill.campus { background: var(--brand-soft); color: var(--brand); border-color: rgba(15,118,110,.25); }
     .rt-pill.social { background: #eef1f4; color: var(--text-2); border-color: var(--line); }
@@ -123,6 +133,16 @@
     .desc { font-size: 13.5px; color: var(--text-2); white-space: pre-wrap; margin: 0 0 14px; }
     .reqs { font-size: 13px; color: var(--text-2); margin: 0; padding-left: 18px; }
     .reqs li { margin-bottom: 4px; }
+    .detail-editor { margin-bottom: 16px; }
+    .detail-edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 16px; }
+    .detail-field { min-width: 0; }
+    .detail-field.full { grid-column: 1 / -1; }
+    .detail-field label { display: block; margin-bottom: 5px; color: var(--text-2); font-size: 12px; font-weight: 600; }
+    .detail-field input, .detail-field textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--text); font: inherit; font-size: 12.5px; line-height: 1.55; }
+    .detail-field textarea { min-height: 105px; resize: vertical; }
+    .detail-field input:focus, .detail-field textarea:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-glow); }
+    .detail-edit-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+    .detail-save { padding: 9px 16px; }
     .detail-foot { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
     .src-link { font-size: 12.5px; color: var(--brand); text-decoration: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 9px; }
     .src-link:hover { border-color: var(--brand); }
@@ -152,6 +172,9 @@
     .modal-close:hover { color: var(--text); }
     .modal-body { padding: 22px; overflow-y: auto; white-space: pre-wrap; font-size: 13.5px; color: var(--text-2); line-height: 1.7; }
     .modal-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+    #confirmModal { z-index: 110; }
+    .confirm-dialog { max-width: 420px; }
+    .confirm-body { padding: 22px; color: var(--text-2); font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; }
 
     .topbar-btn { padding: 8px 14px; border-radius: 10px; font-size: 13px; color: var(--text-2); background: var(--panel-2); border: 1px solid var(--line); }
     .topbar-btn:hover { color: var(--text); border-color: var(--brand); }
@@ -194,6 +217,8 @@
     .chat-question-empty { padding: 34px 16px; color: var(--muted); text-align: center; font-size: 12.5px; }
     .chat-message.located { animation: locateMessage 1.2s ease; }
     @keyframes locateMessage { 0%, 45% { background: var(--brand-soft); } 100% { background: transparent; } }
+    .chat-session-divider { width: 100%; display: flex; align-items: center; gap: 10px; margin: 5px 0; color: var(--muted); font-size: 11px; }
+    .chat-session-divider::before, .chat-session-divider::after { content: ""; flex: 1; border-top: 1px dashed var(--line); }
     .chat-body { min-height: 0; flex: 1; padding: 0; overflow: hidden; white-space: normal; background: #f7f9fa; }
     .chat-messages { height: 100%; padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; }
     .chat-empty { margin: auto; max-width: 430px; padding: 30px; text-align: center; color: var(--muted); }
@@ -205,7 +230,7 @@
     .chat-role { margin: 0 5px 3px; color: var(--muted); font-size: 10.5px; }
     .chat-bubble { padding: 10px 13px; border: 1px solid var(--line); border-radius: 13px 13px 13px 4px; background: var(--panel); color: var(--text-2); font-size: 13.5px; line-height: 1.55; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 1px 2px rgba(28,37,48,.03); }
     .chat-message.user .chat-bubble { border-color: var(--brand); border-radius: 13px 13px 4px 13px; background: var(--brand); color: #fff; white-space: pre-wrap; box-shadow: none; }
-    .chat-message.assistant .chat-bubble { width: 100%; padding: 0 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--text); }
+    .chat-message.assistant .chat-bubble { width: 100%; padding: 0 2px; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--text); line-height: 1.72; }
     .chat-reasoning { margin: 0 0 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: rgba(255,255,255,.65); color: var(--text-2); }
     .chat-reasoning summary { padding: 8px 11px; cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 600; user-select: none; list-style-position: inside; }
     .chat-reasoning summary:hover { color: var(--brand); background: var(--brand-soft); }
@@ -215,15 +240,16 @@
     .chat-reasoning-body > :last-child { margin-bottom: 0; }
     .chat-stream-text { white-space: pre-wrap; }
     .chat-stream-wait { color: var(--muted); font-size: 12px; }
+    .chat-browser-status { margin: 0 0 9px; padding: 8px 10px; border: 1px solid rgba(15,118,110,.2); border-radius: 8px; background: var(--brand-soft); color: var(--brand); font-size: 12px; }
     .chat-bubble > :first-child { margin-top: 0; }
     .chat-bubble > :last-child { margin-bottom: 0; }
-    .chat-bubble p { margin: 0 0 6px; }
-    .chat-bubble h1, .chat-bubble h2, .chat-bubble h3, .chat-bubble h4 { margin: 11px 0 5px; color: var(--text); line-height: 1.3; }
+    .chat-bubble p { margin: 0 0 11px; }
+    .chat-bubble h1, .chat-bubble h2, .chat-bubble h3, .chat-bubble h4 { margin: 17px 0 8px; color: var(--text); line-height: 1.35; }
     .chat-bubble h1 { font-size: 18px; }
     .chat-bubble h2 { font-size: 16px; }
     .chat-bubble h3, .chat-bubble h4 { font-size: 14px; }
-    .chat-bubble ul, .chat-bubble ol { margin: 3px 0 7px; padding-left: 20px; }
-    .chat-bubble li { margin: 2px 0; }
+    .chat-bubble ul, .chat-bubble ol { margin: 7px 0 13px; padding-left: 22px; }
+    .chat-bubble li { margin: 5px 0; }
     .chat-bubble code { padding: 2px 5px; border-radius: 5px; background: var(--panel-2); color: var(--brand-2); font-family: "Cascadia Code", Consolas, monospace; font-size: 12px; }
     .chat-bubble pre { margin: 7px 0; padding: 10px 11px; overflow-x: auto; border: 1px solid var(--line); border-radius: 9px; background: #18232d; color: #e8edf2; line-height: 1.45; }
     .chat-bubble pre code { padding: 0; background: transparent; color: inherit; }
@@ -234,7 +260,10 @@
     .chat-bubble th, .chat-bubble td { padding: 6px 8px; border: 1px solid var(--line); text-align: left; }
     .chat-bubble th { background: var(--panel-2); color: var(--text); }
     .chat-bubble hr { margin: 9px 0; border: 0; border-top: 1px solid var(--line); }
-    .chat-composer { position: relative; align-items: flex-end; padding: 14px 18px; }
+    .chat-composer { position: relative; display: block; padding: 12px 18px 14px; }
+    .chat-agent-option { min-height: 22px; margin-bottom: 7px; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11.5px; }
+    .chat-agent-option[hidden] { display: none; }
+    .chat-agent-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(5,150,105,.1); }
     .chat-input { flex: none; width: 100%; min-height: 52px; max-height: 130px; resize: vertical; padding: 13px 96px 13px 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--bg); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; }
     .chat-input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
     .chat-send { position: absolute; right: 26px; bottom: 22px; min-width: 70px; padding: 9px 15px; }
@@ -247,7 +276,7 @@
     .form-row { margin-bottom: 18px; }
     .form-row label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 7px; }
     .form-row .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
-    .form-row input[type=password], .form-row input[type=text], .form-row select {
+    .form-row input[type=password], .form-row input[type=text], .form-row input[type=number], .form-row select {
       width: 100%; max-width: 100%; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line);
       border-radius: 10px; font-size: 13.5px; color: var(--text);
     }
@@ -259,7 +288,44 @@
     .key-status { font-size: 12.5px; padding: 8px 12px; border-radius: 9px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .key-status.ok { background: rgba(52,211,153,.12); color: var(--ok); border: 1px solid rgba(52,211,153,.25); }
     .key-status.no { background: rgba(251,191,36,.12); color: var(--warn); border: 1px solid rgba(251,191,36,.25); }
+    .context-status { margin-bottom: 18px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-soft); }
+    .context-status.warn { border-color: rgba(217,119,6,.35); background: rgba(251,191,36,.08); }
+    .context-head { display: flex; justify-content: space-between; gap: 12px; color: var(--text-2); font-size: 12.5px; }
+    .context-head strong { color: var(--text); }
+    .context-track { height: 6px; margin: 9px 0 7px; overflow: hidden; border-radius: 999px; background: var(--line); }
+    .context-fill { height: 100%; border-radius: inherit; background: var(--brand); transition: width .2s; }
+    .context-status.warn .context-fill { background: var(--warn); }
+    .context-hint { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
     .modal-body.form { white-space: normal; }
+    .settings-modal { max-width: 900px; height: min(680px, calc(100vh - 48px)); }
+    .settings-layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); flex: 1; min-height: 0; }
+    .settings-nav { padding: 16px 12px; border-right: 1px solid var(--line); background: var(--bg-soft); }
+    .settings-nav-btn { width: 100%; margin-bottom: 4px; padding: 10px 12px; border-radius: 9px; background: transparent; color: var(--text-2); text-align: left; font-size: 13px; font-weight: 600; }
+    .settings-nav-btn:hover { background: var(--panel); color: var(--text); }
+    .settings-nav-btn.active { background: var(--panel); color: var(--brand); box-shadow: 0 1px 2px rgba(28,37,48,.08); }
+    .settings-content { min-width: 0; padding: 24px 28px; overflow-y: auto; }
+    .settings-pane { display: none; }
+    .settings-pane.active { display: block; }
+    .settings-pane-head { margin-bottom: 22px; }
+    .settings-pane-head h4 { margin: 0 0 5px; color: var(--text); font-size: 16px; }
+    .settings-pane-head p { margin: 0; color: var(--muted); font-size: 12.5px; }
+    .settings-toggle { position: relative; width: 100%; min-height: 66px; justify-content: flex-start; padding: 12px 14px; }
+    .settings-toggle input { display: block; position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .settings-toggle:focus-within { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+    .settings-toggle-copy { white-space: normal; }
+    .settings-toggle-copy strong { display: block; margin-bottom: 2px; color: var(--text); font-size: 13.5px; }
+    .settings-toggle-copy span { display: block; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .settings-note { padding: 14px 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--bg-soft); color: var(--text-2); font-size: 12.5px; line-height: 1.65; }
+    .settings-note strong { color: var(--text); }
+    .about-brand { display: flex; align-items: center; gap: 14px; margin: 8px 0 26px; }
+    .about-mark { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 13px; background: var(--brand); color: #fff; font-size: 17px; font-weight: 800; letter-spacing: -.04em; }
+    .about-brand strong { display: block; color: var(--text); font-size: 17px; }
+    .about-brand span { color: var(--muted); font-size: 12px; }
+    .about-meta { margin: 0; border-top: 1px solid var(--line); }
+    .about-meta > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .about-meta dt { color: var(--muted); font-size: 12.5px; }
+    .about-meta dd { margin: 0; color: var(--text); font-size: 13px; overflow-wrap: anywhere; }
+    .about-meta code { padding: 3px 7px; border-radius: 6px; background: var(--panel-2); color: var(--brand-2); }
 
     .table-scroll { overflow-x: auto; }
     @media (max-width: 900px) {
@@ -279,6 +345,13 @@
       .chat-panel .modal-head { flex-wrap: wrap; }
       .form-grid { grid-template-columns: 1fr; }
       .form-grid .span-2 { grid-column: auto; }
+      .detail-edit-grid { grid-template-columns: 1fr; }
+      .detail-field.full { grid-column: auto; }
+      .settings-modal { height: calc(100vh - 28px); }
+      .settings-layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+      .settings-nav { display: flex; gap: 5px; padding: 10px; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .settings-nav-btn { width: auto; margin: 0; white-space: nowrap; }
+      .settings-content { padding: 20px; }
     }
   </style>
 </head>
@@ -372,6 +445,10 @@
           <div class="chat-messages" id="chatMessages"></div>
         </div>
         <div class="modal-foot chat-composer">
+          <div class="chat-agent-option" id="chatBrowserMode" hidden>
+            <span class="chat-agent-dot"></span>
+            网页代理已启用，问题包含网址时自动操作页面
+          </div>
           <textarea class="chat-input" id="chatInput" maxlength="4000" placeholder="请输入内容" onkeydown="handleChatKeydown(event)"></textarea>
           <button class="btn-primary chat-send" id="chatSendBtn" onclick="sendChat()">发送</button>
         </div>
@@ -443,6 +520,20 @@
 
   <div id="toasts"></div>
 
+  <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" onclick="if(event.target===this)resolveConfirm(false)">
+    <div class="modal confirm-dialog">
+      <div class="modal-head">
+        <h3 id="confirmTitle">确认操作</h3>
+        <button class="modal-close" onclick="resolveConfirm(false)" aria-label="关闭">×</button>
+      </div>
+      <div class="confirm-body" id="confirmMessage"></div>
+      <div class="modal-foot">
+        <button class="btn-ghost" id="confirmCancelBtn" onclick="resolveConfirm(false)">取消</button>
+        <button class="btn-danger" id="confirmActionBtn" onclick="resolveConfirm(true)">确认</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
     <div class="modal">
       <div class="modal-head">
@@ -456,37 +547,100 @@
 
   <!-- 设置模态框 -->
   <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
-    <div class="modal">
+    <div class="modal settings-modal">
       <div class="modal-head">
         <h3>⚙️ 设置</h3>
         <button class="modal-close" onclick="closeSettings()">×</button>
       </div>
-      <div class="modal-body form">
-        <div class="key-status" id="keyStatus"></div>
-        <div class="form-row">
-           <label>DeepSeek API Key</label>
-           <input type="password" id="apiKeyInput" placeholder="sk-… （留空则不修改已保存的 Key）" autocomplete="off" />
-           <div class="hint">仅保存在本机 <code>settings.json</code>，用于调用 DeepSeek 抽取职位信息。<br>获取地址：platform.deepseek.com → API Keys。</div>
-        </div>
-        <div class="form-row">
-          <label>岗位抽取模型</label>
-          <select id="extractionModelSelect"></select>
-          <div class="hint">用于把招聘页面整理为结构化岗位。Chat 更快，Reasoner 对复杂页面理解更强。</div>
-        </div>
-        <div class="form-row">
-          <label>岗位聊天模型</label>
-          <select id="chatModelSelect"></select>
-          <div class="hint">用于岗位问答。Reasoner 会返回可实时展开的思维链；Chat 响应更快但不提供思维链。</div>
-        </div>
-        <div class="form-row">
-          <label>服务端口</label>
-           <input type="text" id="portInput" placeholder="5000" inputmode="numeric" autocomplete="off" />
-          <div class="hint">本地服务监听的端口（1–65535）。<b>修改后需重启服务</b>（关闭命令行重新运行 <code>python app.py</code>）才生效，重启后请访问新端口。</div>
+      <div class="settings-layout">
+        <nav class="settings-nav" aria-label="设置分类">
+          <button class="settings-nav-btn active" data-settings-tab="ai" onclick="setSettingsTab('ai')">AI 与模型</button>
+          <button class="settings-nav-btn" data-settings-tab="browser" onclick="setSettingsTab('browser')">网页代理</button>
+          <button class="settings-nav-btn" data-settings-tab="service" onclick="setSettingsTab('service')">服务</button>
+          <button class="settings-nav-btn" data-settings-tab="about" onclick="setSettingsTab('about')">关于</button>
+        </nav>
+        <div class="settings-content form">
+          <section class="settings-pane active" data-settings-pane="ai">
+            <div class="settings-pane-head">
+              <h4>AI 与模型</h4>
+              <p>配置 DeepSeek 凭据，以及职位抽取和岗位问答使用的模型。</p>
+            </div>
+            <div class="key-status" id="keyStatus"></div>
+            <div class="form-row">
+              <label>DeepSeek API Key</label>
+              <input type="password" id="apiKeyInput" placeholder="sk-… （留空则不修改已保存的 Key）" autocomplete="off" />
+              <div class="hint">仅保存在本机 <code>settings.json</code>。获取地址：platform.deepseek.com → API Keys。</div>
+            </div>
+            <div class="form-row">
+              <label>岗位抽取模型</label>
+              <select id="extractionModelSelect"></select>
+              <div class="hint">用于把招聘页面整理为结构化岗位。Chat 更快，Reasoner 对复杂页面理解更强。</div>
+            </div>
+            <div class="form-row">
+              <label>岗位聊天模型</label>
+              <select id="chatModelSelect"></select>
+              <div class="hint">Reasoner 会返回可实时展开的思维链；Chat 响应更快但不提供思维链。</div>
+            </div>
+            <div class="context-status" id="contextStatus">
+              <div class="context-head"><strong>聊天上下文</strong><span id="contextValue">计算中…</span></div>
+              <div class="context-track"><div class="context-fill" id="contextFill" style="width:0"></div></div>
+              <div class="context-hint" id="contextHint">接近限制时会自动开启新 session，历史记录仍保留在聊天界面。</div>
+            </div>
+          </section>
+          <section class="settings-pane" data-settings-pane="browser">
+            <div class="settings-pane-head">
+              <h4>网页代理</h4>
+              <p>允许岗位问答按需访问并操作问题中明确提供的网页。</p>
+            </div>
+            <label class="toggle settings-toggle">
+              <input type="checkbox" id="browserUseEnabledInput" />
+              <span class="switch"></span>
+              <span class="settings-toggle-copy">
+                <strong>启用 Browser Use 网页代理</strong>
+                <span>开启后，包含完整网址的问题会自动调用网页代理；普通岗位问答不受影响。</span>
+              </span>
+            </label>
+            <div class="form-row" style="margin-top:18px">
+              <label>最大执行步数</label>
+              <input type="number" id="browserMaxStepsInput" min="1" max="50" step="1" inputmode="numeric" />
+              <div class="hint">允许设置 1–50 步，默认 20。步数越多，复杂搜索和筛选的成功率越高，但运行时间和 API 费用也会增加。</div>
+            </div>
+            <div class="settings-note" style="margin-top:16px">
+              <strong>完整操作权限</strong><br />
+              代理可以输入文字、使用键盘、提交表单、执行页面脚本以及上传和下载文件。仍仅允许访问问题中明确给出的公网域名，并拦截本机和内网地址；单次运行限制在 120 秒内。请只对可信网站启用。
+            </div>
+          </section>
+          <section class="settings-pane" data-settings-pane="service">
+            <div class="settings-pane-head">
+              <h4>服务</h4>
+              <p>配置本机 Web 服务的运行参数。</p>
+            </div>
+            <div class="form-row">
+              <label>服务端口</label>
+              <input type="text" id="portInput" placeholder="5000" inputmode="numeric" autocomplete="off" />
+              <div class="hint">本地服务监听的端口（1–65535）。<b>修改后需重启服务</b>（关闭命令行重新运行 <code>python app.py</code>）才生效，重启后请访问新端口。</div>
+            </div>
+          </section>
+          <section class="settings-pane" data-settings-pane="about">
+            <div class="settings-pane-head">
+              <h4>关于</h4>
+              <p>当前运行版本与代码更新时间。</p>
+            </div>
+            <div class="about-brand">
+              <div class="about-mark">JS</div>
+              <div><strong id="aboutName">Job Scraper</strong><span>本地招聘信息管理与分析工具</span></div>
+            </div>
+            <dl class="about-meta">
+              <div><dt>Git 版本号</dt><dd><code id="aboutVersion">读取中…</code></dd></div>
+              <div><dt>更新时间</dt><dd id="aboutUpdatedAt">读取中…</dd></div>
+              <div><dt>运行方式</dt><dd>本机 Flask 服务</dd></div>
+            </dl>
+          </section>
         </div>
       </div>
       <div class="modal-foot">
         <button class="btn-ghost" onclick="closeSettings()">取消</button>
-        <button class="btn-primary" style="padding:10px 20px" onclick="saveSettings()">保存设置</button>
+        <button class="btn-primary" id="saveSettingsBtn" style="padding:10px 20px" onclick="saveSettings()">保存设置</button>
       </div>
     </div>
   </div>
@@ -495,11 +649,11 @@
     const STATUSES = {{ statuses | tojson }};
     const RECRUIT_TYPES = {{ recruit_types | tojson }};
     const STATUS_COLORS = {
-      "待投递": "#6f7891", "已投递": "#0f766e", "笔试中": "#7c3aed",
+      "待投递": "#6f7891", "已投递": "#0f766e", "未进面": "#b45309", "笔试中": "#7c3aed",
       "面试中": "#d97706", "已offer": "#059669", "已淘汰": "#dc2626"
     };
     const sc = s => STATUS_COLORS[s] || "#6f7891";
-    let lastSourceText = "", currentFilter = "全部", allJobs = [], expandedId = null;
+    let lastSourceText = "", currentFilter = "全部", allJobs = [], expandedId = null, editingDetailId = null;
     const facetFilters = { company: "", location: "", recruit_type: "", status: "" };
 
     function esc(s) {
@@ -514,6 +668,28 @@
       el.innerHTML = (type === 'ok' ? '✅ ' : type === 'err' ? '⚠️ ' : '') + esc(msg);
       box.appendChild(el);
       setTimeout(() => { el.classList.add('fade'); setTimeout(() => el.remove(), 300); }, 2600);
+    }
+
+    let confirmResolver = null, confirmPreviousFocus = null;
+
+    function askConfirm(message, options = {}) {
+      if (confirmResolver) resolveConfirm(false);
+      confirmPreviousFocus = document.activeElement;
+      document.getElementById('confirmTitle').textContent = options.title || '确认操作';
+      document.getElementById('confirmMessage').textContent = message;
+      document.getElementById('confirmActionBtn').textContent = options.confirmText || '确认';
+      document.getElementById('confirmModal').classList.add('show');
+      setTimeout(() => document.getElementById('confirmCancelBtn').focus(), 0);
+      return new Promise(resolve => { confirmResolver = resolve; });
+    }
+
+    function resolveConfirm(confirmed) {
+      document.getElementById('confirmModal').classList.remove('show');
+      const resolve = confirmResolver;
+      confirmResolver = null;
+      if (confirmPreviousFocus && confirmPreviousFocus.isConnected) confirmPreviousFocus.focus();
+      confirmPreviousFocus = null;
+      if (resolve) resolve(confirmed);
     }
 
     // ---------- 抓取（自动入库） ----------
@@ -629,6 +805,7 @@
       try {
         const res = await fetch('/api/jobs');
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '岗位加载失败');
         allJobs = data.jobs || [];
         renderStats(allJobs);
         renderFilters(allJobs);
@@ -655,9 +832,21 @@
       tbody.innerHTML = jobs.map(rowHtml).join('');
     }
 
+    function formatStatusTime(value, includeTime = false) {
+      const date = new Date(value);
+      if (!value || Number.isNaN(date.getTime())) return '';
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      if (includeTime) Object.assign(options, { hour: '2-digit', minute: '2-digit', hour12: false });
+      return new Intl.DateTimeFormat('zh-CN', options).format(date);
+    }
+
     function rowHtml(j) {
       const statusOpts = STATUSES.map(s => `<option value="${s}" ${s === j.status ? 'selected' : ''}>${s}</option>`).join('');
       const rtOpts = RECRUIT_TYPES.map(s => `<option value="${s}" ${s === j.recruit_type ? 'selected' : ''}>${s}</option>`).join('');
+      const statusHistory = Array.isArray(j.status_history) ? j.status_history : [];
+      const latestStatus = statusHistory.length ? statusHistory[statusHistory.length - 1] : null;
+      const statusDate = latestStatus ? formatStatusTime(latestStatus.changed_at) : '';
+      const statusDateFull = latestStatus ? formatStatusTime(latestStatus.changed_at, true) : '';
       const expanded = expandedId === j.id;
       return `<tr class="job-row ${expanded ? 'expanded' : ''}" onclick="toggleRow('${j.id}', event)">
         <td class="col-star">
@@ -672,8 +861,11 @@
         <td onclick="event.stopPropagation()">
           <select onchange="patchField('${j.id}', 'recruit_type', this.value)">${rtOpts}</select>
         </td>
-        <td onclick="event.stopPropagation()">
-          <select onchange="patchField('${j.id}', 'status', this.value)" style="color:${sc(j.status)};font-weight:600">${statusOpts}</select>
+        <td class="status-cell" onclick="event.stopPropagation()">
+          <div class="status-control">
+            <select onchange="patchField('${j.id}', 'status', this.value)" style="color:${sc(j.status)};font-weight:600">${statusOpts}</select>
+            ${statusDate ? `<div class="status-date" title="${esc(statusDateFull)}">更新于 ${esc(statusDate)}</div>` : ''}
+          </div>
         </td>
         <td onclick="event.stopPropagation()">
           <input class="note-input" placeholder="备注…" value="${esc(j.note || '')}" onblur="patchField('${j.id}', 'note', this.value)" />
@@ -695,21 +887,88 @@
 
     function detailRow(j) {
       const reqs = (j.requirements || []).map(r => `<li>${esc(r)}</li>`).join('');
+      const statusHistory = (Array.isArray(j.status_history) ? j.status_history : []).map(entry => {
+        const changedAt = formatStatusTime(entry.changed_at, true);
+        return `<span class="status-history-item"><span class="status-history-dot" style="background:${sc(entry.status)}"></span><b>${esc(entry.status)}</b><span class="status-history-time">${esc(changedAt)}</span></span>`;
+      }).join('');
       const verb = j.description_verbatim
         ? `<span class="verbatim ok">✓ 原文</span>`
         : `<span class="verbatim warn">⚠ 可能经整理</span>`;
+      const editing = editingDetailId === j.id;
+      const content = editing ? `<div class="desc-head">编辑岗位详情 ${verb}</div>
+        <div class="detail-editor" data-detail-editor="${j.id}">
+          <div class="detail-edit-grid">
+            <div class="detail-field"><label>工作性质</label><input data-detail-field="employment_type" maxlength="200" value="${esc(j.employment_type || '')}" /></div>
+            <div class="detail-field"><label>来源链接</label><input data-detail-field="source_url" maxlength="2000" value="${esc(j.source_url || '')}" placeholder="https://..." /></div>
+            <div class="detail-field full"><label>职位描述</label><textarea data-detail-field="description" maxlength="50000">${esc(j.description || '')}</textarea></div>
+            <div class="detail-field full"><label>任职要求</label><textarea data-detail-field="requirements" placeholder="每行一条要求">${esc((j.requirements || []).join('\n'))}</textarea></div>
+          </div>
+          <div class="detail-edit-actions">
+            <button class="btn-ghost" onclick="cancelJobDetails('${j.id}', event)">取消</button>
+            <button class="btn-primary detail-save" onclick="saveJobDetails('${j.id}', event)">保存详情</button>
+          </div>
+        </div>` : `${j.description
+          ? `<div class="desc-head">职位描述 ${verb}</div><div class="desc">${esc(j.description)}</div>`
+          : '<div class="cell-muted">（无描述）</div>'}
+        ${reqs ? `<div class="desc-head">任职要求</div><ul class="reqs">${reqs}</ul>` : ''}`;
       return `<tr class="detail-row"><td colspan="8"><div class="detail-inner">
-        ${j.description ? `<div class="desc-head">职位描述 ${verb}</div><div class="desc">${esc(j.description)}</div>` : '<div class="cell-muted">（无描述）</div>'}
-        ${reqs ? `<div class="desc-head">任职要求</div><ul class="reqs">${reqs}</ul>` : ''}
+        ${content}
+        ${statusHistory ? `<div class="desc-head">状态记录</div><div class="status-history">${statusHistory}</div>` : ''}
         <div class="detail-foot">
+          ${!editing ? `<button class="src-link detail-edit-trigger" style="background:none;cursor:pointer" onclick="startEditJobDetails('${j.id}', event)">✎ 编辑详情</button>` : ''}
            ${j.source_url ? `<a class="src-link" href="${esc(j.source_url)}" target="_blank" rel="noopener noreferrer">↗ 打开原页面</a>` : ''}
           ${lastSourceText ? `<button class="src-link" style="background:none;cursor:pointer" onclick="openSource()">📄 查看抓取原文</button>` : ''}
         </div>
       </div></td></tr>`;
     }
 
+    function startEditJobDetails(id, event) {
+      event.stopPropagation();
+      editingDetailId = id;
+      renderTable();
+    }
+
+    function cancelJobDetails(id, event) {
+      event.stopPropagation();
+      if (editingDetailId === id) editingDetailId = null;
+      renderTable();
+    }
+
+    async function saveJobDetails(id, event) {
+      event.stopPropagation();
+      const job = allJobs.find(item => item.id === id);
+      const editor = document.querySelector(`[data-detail-editor="${id}"]`);
+      if (!job || !editor) return;
+      const value = field => editor.querySelector(`[data-detail-field="${field}"]`).value;
+      const payload = {
+        employment_type: value('employment_type'),
+        source_url: value('source_url'),
+        description: value('description'),
+        requirements: value('requirements').split(/\r?\n/).map(item => item.trim()).filter(Boolean),
+      };
+      const button = editor.querySelector('.detail-save');
+      button.disabled = true;
+      button.textContent = '保存中…';
+      try {
+        const res = await fetch('/api/jobs/' + id, {
+          method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '保存失败');
+        Object.assign(job, data.job);
+        editingDetailId = null;
+        renderTable();
+        toast('岗位详情已保存', 'ok');
+      } catch (e) {
+        button.disabled = false;
+        button.textContent = '保存详情';
+        toast('保存失败：' + e.message, 'err');
+      }
+    }
+
     function toggleRow(id, e) {
       expandedId = (expandedId === id) ? null : id;
+      editingDetailId = null;
       renderTable();
     }
 
@@ -749,7 +1008,7 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || '更新失败');
-        if (data.job) j[field] = data.job[field];
+        if (data.job) Object.assign(j, data.job);
         if (['title', 'company', 'location', 'status', 'recruit_type'].includes(field)) {
           renderFacetFilters(); renderTable(); renderStats(allJobs); renderFilters(allJobs);
         }
@@ -795,7 +1054,11 @@
     }
 
     async function removeJob(id, title) {
-      if (!confirm('确定删除「' + (title || '该职位') + '」？')) return;
+      const confirmed = await askConfirm(
+        '确定删除「' + (title || '该职位') + '」？删除后无法恢复。',
+        { title: '删除岗位', confirmText: '删除' }
+      );
+      if (!confirmed) return;
       try {
         const res = await fetch('/api/jobs/' + id, { method: 'DELETE' });
         if (!res.ok) { const d = await res.json(); throw new Error(d.error || '删除失败'); }
@@ -809,7 +1072,11 @@
       document.getElementById('modal').classList.add('show');
     }
     function closeModal() { document.getElementById('modal').classList.remove('show'); }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeAddJob(); closeChat(); closeSettings(); } });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        resolveConfirm(false); closeModal(); closeAddJob(); closeChat(); closeSettings();
+      }
+    });
 
     // ---------- 手动添加职位 ----------
     function openAddJob() {
@@ -877,8 +1144,13 @@
         renderQuestionHistory([]);
         return;
       }
+      let previousSession = null;
       box.innerHTML = messages.map((message, index) => {
         const isUser = message.role === 'user';
+        const sessionId = message.session_id || 'legacy';
+        const sessionDivider = previousSession !== null && sessionId !== previousSession
+          ? '<div class="chat-session-divider">新 session · 不携带先前聊天上下文</div>' : '';
+        previousSession = sessionId;
         const content = isUser
           ? esc(message.content)
           : message.html || (message.content ? `<div class="chat-stream-text">${esc(message.content)}</div>` : '');
@@ -888,9 +1160,11 @@
         const reasoning = showReasoning
           ? `<details class="chat-reasoning" ${message.streaming ? 'open' : ''}><summary>${message.streaming ? '思维链生成中…' : '查看思维链'}</summary><div class="chat-reasoning-body">${reasoningContent}</div></details>`
           : '';
-        return `<div class="chat-message ${isUser ? 'user' : 'assistant'}" data-message-index="${index}">
+        const browserStatus = !isUser && message.browserStatus
+          ? `<div class="chat-browser-status">🌐 ${esc(message.browserStatus)}</div>` : '';
+        return `${sessionDivider}<div class="chat-message ${isUser ? 'user' : 'assistant'}" data-message-index="${index}">
           <div class="chat-role">${isUser ? '我' : 'DeepSeek'}</div>
-          <div class="chat-bubble">${reasoning}${content}</div>
+          <div class="chat-bubble">${browserStatus}${reasoning}${content}</div>
         </div>`;
       }).join('');
       box.scrollTop = box.scrollHeight;
@@ -995,8 +1269,14 @@
       button.disabled = true;
       button.textContent = '思考中…';
       input.value = '';
-      const liveAssistant = { role: 'assistant', content: '', reasoning: '', streaming: true };
-      const liveMessages = [...chatHistory, { role: 'user', content: message }, liveAssistant];
+      const activeSessionId = chatHistory.length ? (chatHistory[chatHistory.length - 1].session_id || 'legacy') : 'pending';
+      const liveUser = { role: 'user', content: message, session_id: activeSessionId };
+      const browserUse = settingsState.browser_use_enabled && /https?:\/\/[^\s]+/i.test(message);
+      const liveAssistant = {
+        role: 'assistant', content: '', reasoning: '', streaming: true, session_id: activeSessionId,
+        browserStatus: browserUse ? '等待网页代理启动…' : ''
+      };
+      const liveMessages = [...chatHistory, liveUser, liveAssistant];
       renderChat(liveMessages);
       try {
         const res = await fetch('/api/chat', {
@@ -1020,7 +1300,11 @@
           });
         };
         const handleEvent = event => {
-          if (event.type === 'reasoning') {
+          if (event.type === 'browser_status' || event.type === 'browser_result') {
+            liveAssistant.browserStatus = event.message || '';
+            button.textContent = event.type === 'browser_status' ? '浏览中…' : '思考中…';
+            scheduleRender();
+          } else if (event.type === 'reasoning') {
             liveAssistant.reasoning += event.delta || '';
             scheduleRender();
           } else if (event.type === 'answer') {
@@ -1032,9 +1316,15 @@
             liveAssistant.content = '';
             button.textContent = '重试中…';
             scheduleRender();
+          } else if (event.type === 'session_reset') {
+            liveUser.session_id = 'pending-new-session';
+            liveAssistant.session_id = 'pending-new-session';
+            toast(event.message || '上下文已自动开启新 session', 'ok');
+            scheduleRender();
           } else if (event.type === 'done') {
             completed = true;
             chatHistory = event.messages || [];
+            if (event.context) renderContextUsage(event.context);
           } else if (event.type === 'error') {
             streamError = event.error || '问答失败';
           }
@@ -1066,7 +1356,12 @@
     }
 
     async function clearChat() {
-      if (!chatHistory.length || !confirm('确定清空全部聊天记录？')) return;
+      if (!chatHistory.length) return;
+      const confirmed = await askConfirm(
+        '确定清空全部聊天记录？此操作无法恢复。',
+        { title: '清空聊天记录', confirmText: '清空' }
+      );
+      if (!confirmed) return;
       try {
         const res = await fetch('/api/chat', { method: 'DELETE' });
         if (!res.ok) { const data = await res.json(); throw new Error(data.error || '清空失败'); }
@@ -1076,8 +1371,33 @@
       } catch (e) { toast('清空失败：' + e.message, 'err'); }
     }
 
-    // ---------- 设置：API Key + 模型 ----------
-    let settingsState = { has_api_key: false };
+    // ---------- 设置 ----------
+    let settingsState = { has_api_key: false, browser_use_enabled: false, browser_max_steps: 20 };
+
+    function formatTokenCount(value) {
+      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+      return value >= 1000 ? `${(value / 1000).toFixed(1)}K` : String(value || 0);
+    }
+
+    function renderContextUsage(context) {
+      const box = document.getElementById('contextStatus');
+      const used = context.estimated_tokens || 0;
+      const limit = context.context_limit || 1000000;
+      const percent = Math.min(100, Math.round(used / limit * 100));
+      box.classList.toggle('warn', context.near_limit);
+      document.getElementById('contextValue').textContent = `${formatTokenCount(used)} / ${formatTokenCount(limit)} tokens`;
+      document.getElementById('contextFill').style.width = `${percent}%`;
+      document.getElementById('contextHint').textContent = context.near_limit
+        ? '当前 session 已接近限制，下一次提问将自动开启新 session。'
+        : `当前为第 ${context.session_count || 1} 个 session；达到 ${formatTokenCount(context.rollover_at)} tokens 时自动开启新 session。`;
+    }
+
+    async function loadContextUsage() {
+      try {
+        const res = await fetch('/api/chat/context');
+        if (res.ok) renderContextUsage(await res.json());
+      } catch (e) { /* 上下文统计不可用不阻塞设置 */ }
+    }
 
     async function loadSettings() {
       try {
@@ -1091,11 +1411,15 @@
           .map(m => `<option value="${m.id}" ${m.id === settingsState.chat_model ? 'selected' : ''}>${esc(m.label)}</option>`).join('');
         // 当前端口
         document.getElementById('portInput').value = settingsState.port || '';
+        document.getElementById('browserUseEnabledInput').checked = !!settingsState.browser_use_enabled;
+        document.getElementById('browserMaxStepsInput').value = settingsState.browser_max_steps || 20;
         // 顶栏按钮：没配 Key 时高亮提醒
         const btn = document.getElementById('settingsBtn');
         btn.classList.toggle('warn', !settingsState.has_api_key);
         btn.innerHTML = settingsState.has_api_key ? '⚙️ 设置' : '⚙️ 设置 · 未配置 Key';
         renderKeyStatus();
+        renderBrowserAgentMode();
+        loadContextUsage();
       } catch (e) { /* 设置不可用不阻塞主流程 */ }
     }
 
@@ -1110,9 +1434,47 @@
       }
     }
 
-    function openSettings() {
+    function renderBrowserAgentMode() {
+      document.getElementById('chatBrowserMode').hidden = !settingsState.browser_use_enabled;
+    }
+
+    function setSettingsTab(tab) {
+      document.querySelectorAll('[data-settings-tab]').forEach(button => {
+        button.classList.toggle('active', button.dataset.settingsTab === tab);
+      });
+      document.querySelectorAll('[data-settings-pane]').forEach(pane => {
+        pane.classList.toggle('active', pane.dataset.settingsPane === tab);
+      });
+      if (tab === 'about') loadAbout();
+    }
+
+    function formatUpdatedAt(value) {
+      const date = new Date(value);
+      if (!value || Number.isNaN(date.getTime())) return value || '未知';
+      return new Intl.DateTimeFormat('zh-CN', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date);
+    }
+
+    async function loadAbout() {
+      try {
+        const res = await fetch('/api/about');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '版本信息加载失败');
+        document.getElementById('aboutName').textContent = data.name || 'Job Scraper';
+        document.getElementById('aboutVersion').textContent = `${data.git_version || '未知'}${data.dirty ? ' · 未提交修改' : ''}`;
+        document.getElementById('aboutUpdatedAt').textContent = formatUpdatedAt(data.updated_at);
+      } catch (e) {
+        document.getElementById('aboutVersion').textContent = '读取失败';
+        document.getElementById('aboutUpdatedAt').textContent = '读取失败';
+      }
+    }
+
+    function openSettings(tab = 'ai') {
       loadSettings();
       document.getElementById('apiKeyInput').value = '';
+      setSettingsTab(tab);
       document.getElementById('settingsModal').classList.add('show');
     }
     function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
@@ -1121,8 +1483,13 @@
       const api_key = document.getElementById('apiKeyInput').value;  // 空=不改
       const extraction_model = document.getElementById('extractionModelSelect').value;
       const chat_model = document.getElementById('chatModelSelect').value;
+      const browser_use_enabled = document.getElementById('browserUseEnabledInput').checked;
+      const browser_max_steps = Number(document.getElementById('browserMaxStepsInput').value);
       const portRaw = document.getElementById('portInput').value.trim();
       const prevPort = settingsState.port;
+      if (!Number.isInteger(browser_max_steps) || browser_max_steps < 1 || browser_max_steps > 50) {
+        toast('网页代理最大步数需为 1–50 的整数', 'err'); return;
+      }
       // 端口前端先校验，避免无谓请求
       if (portRaw !== '') {
         const p = Number(portRaw);
@@ -1131,7 +1498,7 @@
         }
       }
       try {
-        const body = { extraction_model, chat_model };
+        const body = { extraction_model, chat_model, browser_use_enabled, browser_max_steps };
         if (api_key.trim() !== '') body.api_key = api_key;  // 仅在填了时才动 Key
         if (portRaw !== '') body.port = Number(portRaw);
         const res = await fetch('/api/settings', {

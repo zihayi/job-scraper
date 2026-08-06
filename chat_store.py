@@ -55,27 +55,62 @@ class ChatStore:
         with self._lock:
             return deepcopy(self._read())
 
-    def context(self, limit: int = 20) -> list[dict[str, str]]:
+    @staticmethod
+    def _session_id(message: dict[str, Any]) -> str:
+        return str(message.get("session_id") or "legacy")
+
+    def current_session_id(self) -> str:
+        messages = self.list()
+        return self._session_id(messages[-1]) if messages else ""
+
+    def session_count(self) -> int:
+        session_ids = [self._session_id(message) for message in self.list()]
+        return len(list(dict.fromkeys(session_ids)))
+
+    def context(self) -> list[dict[str, str]]:
+        messages = self.list()
+        if not messages:
+            return []
+        current_session = self._session_id(messages[-1])
         return [
             {"role": message["role"], "content": str(message.get("content") or "")}
-            for message in self.list()[-limit:]
+            for message in messages
             if message.get("role") in {"user", "assistant"}
+            and self._session_id(message) == current_session
         ]
 
-    def add_exchange(self, question: str, answer: str, reasoning: str = "") -> list[dict[str, Any]]:
+    def add_exchange(
+        self,
+        question: str,
+        answer: str,
+        reasoning: str = "",
+        new_session: bool = False,
+    ) -> list[dict[str, Any]]:
         now = datetime.now(timezone.utc).isoformat()
-        additions = [
-            {"id": uuid.uuid4().hex, "role": "user", "content": question, "created_at": now},
-            {
-                "id": uuid.uuid4().hex,
-                "role": "assistant",
-                "content": answer,
-                "reasoning": reasoning,
-                "created_at": now,
-            },
-        ]
         with self._lock:
-            messages = (self._read() + additions)[-MAX_MESSAGES:]
+            existing = self._read()
+            if new_session or not existing:
+                session_id = uuid.uuid4().hex
+            else:
+                session_id = self._session_id(existing[-1])
+            additions = [
+                {
+                    "id": uuid.uuid4().hex,
+                    "session_id": session_id,
+                    "role": "user",
+                    "content": question,
+                    "created_at": now,
+                },
+                {
+                    "id": uuid.uuid4().hex,
+                    "session_id": session_id,
+                    "role": "assistant",
+                    "content": answer,
+                    "reasoning": reasoning,
+                    "created_at": now,
+                },
+            ]
+            messages = (existing + additions)[-MAX_MESSAGES:]
             self._write(messages)
             return deepcopy(messages)
 

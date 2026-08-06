@@ -11,6 +11,7 @@ from extract import CHAT_MODEL, DEFAULT_MODEL, MODEL_CHOICES
 
 
 DEFAULT_PORT = 5000
+DEFAULT_BROWSER_MAX_STEPS = 20
 
 
 class SettingsStore:
@@ -66,11 +67,23 @@ class SettingsStore:
             port = DEFAULT_PORT
         if not 1 <= port <= 65535:
             port = DEFAULT_PORT
+        browser_use_enabled = saved.get("browser_use_enabled", False)
+        if not isinstance(browser_use_enabled, bool):
+            browser_use_enabled = False
+        browser_max_steps = saved.get("browser_max_steps", DEFAULT_BROWSER_MAX_STEPS)
+        if (
+            isinstance(browser_max_steps, bool)
+            or not isinstance(browser_max_steps, int)
+            or not 1 <= browser_max_steps <= 50
+        ):
+            browser_max_steps = DEFAULT_BROWSER_MAX_STEPS
         return {
             "api_key": api_key,
             "extraction_model": extraction_model,
             "chat_model": chat_model,
             "port": port,
+            "browser_use_enabled": browser_use_enabled,
+            "browser_max_steps": browser_max_steps,
         }
 
     def public(self) -> dict[str, Any]:
@@ -89,6 +102,8 @@ class SettingsStore:
             "chat_model": values["chat_model"],
             "model_choices": MODEL_CHOICES,
             "port": values["port"],
+            "browser_use_enabled": values["browser_use_enabled"],
+            "browser_max_steps": values["browser_max_steps"],
         }
 
     def update(self, changes: dict[str, Any]) -> dict[str, Any]:
@@ -123,5 +138,15 @@ class SettingsStore:
                 if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
                     raise ValueError("端口需为 1–65535 的整数")
                 saved["port"] = port
+            if "browser_use_enabled" in changes:
+                enabled = changes["browser_use_enabled"]
+                if not isinstance(enabled, bool):
+                    raise ValueError("网页代理开关必须为布尔值")
+                saved["browser_use_enabled"] = enabled
+            if "browser_max_steps" in changes:
+                max_steps = changes["browser_max_steps"]
+                if isinstance(max_steps, bool) or not isinstance(max_steps, int) or not 1 <= max_steps <= 50:
+                    raise ValueError("网页代理最大步数需为 1–50 的整数")
+                saved["browser_max_steps"] = max_steps
             self._write(saved)
         return self.public()

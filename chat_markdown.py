@@ -5,9 +5,16 @@ from typing import Any
 import mistune
 
 
+class _ChatRenderer(mistune.HTMLRenderer):
+    def link(self, text: str, url: str, title: str | None = None) -> str:
+        html = super().link(text, url, title)
+        return html.replace("<a ", '<a target="_blank" rel="noopener noreferrer" ', 1)
+
+
 _markdown = mistune.create_markdown(
+    renderer=_ChatRenderer(escape=True),
     escape=True,
-    plugins=["strikethrough", "table"],
+    plugins=["strikethrough", "table", "url"],
 )
 
 

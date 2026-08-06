@@ -46,11 +46,29 @@ class AppTests(unittest.TestCase):
         self.assertIn('id="chatQuestionList"', page)
         self.assertIn('id="addJobBtn"', page)
         self.assertIn('id="addJobModal"', page)
+        self.assertIn('id="confirmModal"', page)
+        self.assertIn('function askConfirm(', page)
+        self.assertNotIn("!confirm(", page)
+        self.assertIn('id="contextStatus"', page)
+        self.assertIn('class="status-date"', page)
+        self.assertIn('class="status-history"', page)
+        self.assertIn('data-detail-field="description"', page)
+        self.assertIn('data-detail-field="requirements"', page)
+        self.assertIn('onclick="saveJobDetails', page)
+        self.assertIn('onclick="startEditJobDetails', page)
+        self.assertNotIn('data-detail-field="salary"', page)
+        self.assertIn('id="browserUseEnabledInput"', page)
+        self.assertIn('id="browserMaxStepsInput"', page)
+        self.assertIn('data-settings-tab="browser"', page)
+        self.assertIn('data-settings-tab="about"', page)
+        self.assertIn('id="aboutVersion"', page)
 
         settings = self.client.get("/api/settings").get_json()
         self.assertFalse(settings["has_api_key"])
         self.assertEqual(settings["extraction_model"], "deepseek-chat")
         self.assertEqual(settings["chat_model"], "deepseek-reasoner")
+        self.assertFalse(settings["browser_use_enabled"])
+        self.assertEqual(settings["browser_max_steps"], 20)
         self.assertIn('id="extractionModelSelect"', page)
         self.assertIn('id="chatModelSelect"', page)
 
@@ -62,6 +80,8 @@ class AppTests(unittest.TestCase):
                 "extraction_model": "deepseek-reasoner",
                 "chat_model": "deepseek-chat",
                 "port": 5001,
+                "browser_use_enabled": True,
+                "browser_max_steps": 24,
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -70,6 +90,23 @@ class AppTests(unittest.TestCase):
         self.assertTrue(response.get_json()["has_api_key"])
         self.assertEqual(response.get_json()["extraction_model"], "deepseek-reasoner")
         self.assertEqual(response.get_json()["chat_model"], "deepseek-chat")
+        self.assertTrue(response.get_json()["browser_use_enabled"])
+        self.assertEqual(response.get_json()["browser_max_steps"], 24)
+
+    def test_about_returns_git_version_and_update_time(self):
+        with patch.object(
+            webapp,
+            "_git_app_info",
+            return_value={"git_version": "abc1234", "updated_at": "2026-08-05T10:36:20+08:00", "dirty": True},
+        ):
+            response = self.client.get("/api/about")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {
+            "name": "Job Scraper",
+            "git_version": "abc1234",
+            "updated_at": "2026-08-05T10:36:20+08:00",
+            "dirty": True,
+        })
 
     def test_job_lifecycle_and_excel_export(self):
         job = webapp.job_store.add(
@@ -88,6 +125,26 @@ class AppTests(unittest.TestCase):
         self.assertEqual(updated["company"], "新公司")
         self.assertEqual(updated["location"], "深圳")
         self.assertEqual(updated["status"], "面试中")
+        self.assertEqual([entry["status"] for entry in updated["status_history"]], ["待投递", "面试中"])
+
+        response = self.client.patch(
+            f"/api/jobs/{job['id']}",
+            json={
+                "salary": "25k-35k",
+                "employment_type": "全职",
+                "source_url": "https://example.com/job-updated",
+                "description": "更新后的职位描述",
+                "requirements": ["Python", " Linux "],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        details = response.get_json()["job"]
+        self.assertEqual(details["salary"], "25k-35k")
+        self.assertEqual(details["requirements"], ["Python", "Linux"])
+        self.assertEqual(details["url"], "https://example.com/job-updated")
+        self.assertFalse(details["description_verbatim"])
+        invalid_url = self.client.patch(f"/api/jobs/{job['id']}", json={"source_url": "not-a-url"})
+        self.assertEqual(invalid_url.status_code, 400)
 
         export = self.client.get("/api/export")
         self.assertEqual(export.status_code, 200)
@@ -118,6 +175,7 @@ class AppTests(unittest.TestCase):
         self.assertEqual(job["status"], "已投递")
         self.assertEqual(job["note"], "朋友内推")
         self.assertEqual(job["requirements"], ["熟悉 C++", "熟悉 Linux"])
+        self.assertEqual([entry["status"] for entry in job["status_history"]], ["待投递", "已投递"])
 
         duplicate = self.client.post("/api/jobs", json=payload)
         self.assertEqual(duplicate.status_code, 409)
@@ -168,6 +226,82 @@ class AppTests(unittest.TestCase):
         response = self.client.delete("/api/chat")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.client.get("/api/chat").get_json()["messages"], [])
+
+    def test_chat_automatically_starts_new_session_near_context_limit(self):
+        webapp.job_store.add([{"title": "后端工程师", "source_url": "https://example.com/job"}])
+        webapp.settings_store.update({"api_key": "test-key", "chat_model": "deepseek-reasoner"})
+        webapp.chat_store.add_exchange("旧问题", "旧回答")
+        events = iter([
+            {"type": "reasoning", "delta": "新分析"},
+            {"type": "answer", "delta": "新回答"},
+        ])
+        with (
+            patch.object(webapp, "estimate_chat_context_tokens", return_value=995_000),
+            patch.object(webapp, "stream_chat_about_jobs", return_value=events) as chat,
+        ):
+            response = self.client.post("/api/chat", json={"message": "新问题"}, buffered=True)
+        streamed = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
+        self.assertEqual(streamed[0]["type"], "session_reset")
+        self.assertEqual(chat.call_args.args[2], [])
+        self.assertEqual(webapp.chat_store.session_count(), 2)
+        self.assertEqual(webapp.chat_store.context(), [
+            {"role": "user", "content": "新问题"},
+            {"role": "assistant", "content": "新回答"},
+        ])
+
+        context = self.client.get("/api/chat/context").get_json()
+        self.assertEqual(context["context_limit"], 1_000_000)
+        self.assertEqual(context["session_count"], 2)
+
+    def test_browser_agent_result_is_added_to_chat_context(self):
+        webapp.settings_store.update({
+            "api_key": "test-key",
+            "chat_model": "deepseek-chat",
+            "browser_use_enabled": True,
+            "browser_max_steps": 24,
+        })
+        stream_events = iter([{"type": "answer", "delta": "整理后的网页回答"}])
+        with (
+            patch.object(webapp, "browser_task_domains", return_value=["example.com"]),
+            patch.object(webapp, "run_browser_task", return_value="网页标题与招聘内容") as browser,
+            patch.object(webapp, "stream_chat_about_jobs", return_value=stream_events) as chat,
+        ):
+            response = self.client.post(
+                "/api/chat",
+                json={"message": "查看 https://example.com/jobs"},
+                buffered=True,
+            )
+        events = [json.loads(line) for line in response.get_data(as_text=True).splitlines()]
+        self.assertEqual([event["type"] for event in events[:3]], ["browser_status", "browser_result", "answer"])
+        browser.assert_called_once()
+        self.assertEqual(browser.call_args.args[3], 24)
+        self.assertIn("网页标题与招聘内容", chat.call_args.args[0])
+        self.assertEqual(webapp.chat_store.list()[0]["content"], "查看 https://example.com/jobs")
+
+    def test_browser_agent_setting_does_not_affect_chat_without_url(self):
+        webapp.job_store.add([{"title": "后端工程师", "source_url": "https://example.com/job"}])
+        webapp.settings_store.update({"api_key": "test-key", "browser_use_enabled": True})
+        with (
+            patch.object(webapp, "run_browser_task") as browser,
+            patch.object(
+                webapp,
+                "stream_chat_about_jobs",
+                return_value=iter([{"type": "answer", "delta": "普通岗位回答"}]),
+            ),
+        ):
+            response = self.client.post("/api/chat", json={"message": "比较已保存岗位"}, buffered=True)
+        self.assertEqual(response.status_code, 200)
+        browser.assert_not_called()
+
+    def test_chat_request_cannot_override_disabled_browser_agent_setting(self):
+        webapp.settings_store.update({"api_key": "test-key", "browser_use_enabled": False})
+        with patch.object(webapp, "run_browser_task") as browser:
+            response = self.client.post(
+                "/api/chat",
+                json={"message": "查看 https://example.com/jobs", "browser_use": True},
+            )
+        self.assertEqual(response.status_code, 400)
+        browser.assert_not_called()
 
 
 if __name__ == "__main__":
